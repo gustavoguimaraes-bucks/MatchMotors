@@ -11,8 +11,8 @@ const Index = () => {
       <div className="absolute inset-0 bg-black bg-opacity-70"></div>
       
       <div className="relative z-10 text-center">
-        <h1 className="text-5xl font-light text-white mb-8">
-          Bem-vindo ao <span className="font-bold">MatchMotors</span>
+        <h1 id="matchMotors" className="text-5xl font-light text-white mb-8">
+          Bem-vindo ao <div className="font-bold">MatchMotors!</div>
         </h1>
         <p className="text-xl text-gray-300 mb-12">
           Encontre o carro dos seus sonhos ou venda o seu
