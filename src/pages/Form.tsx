@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useEffect } from 'react';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
@@ -14,12 +15,15 @@ const Form = () => {
   // Desired Vehicle
   const [desiredType, setDesiredType] = useState('');
   const [desiredBrand, setDesiredBrand] = useState('');
+  const [brands, setBrands] = useState<{ code: string; name: string }[]>([]);
   const [desiredYear, setDesiredYear] = useState('');
+  const [years, setYears] = useState<{ code: string; name: string }[]>([]);
   const [desiredModel, setDesiredModel] = useState('');
+  const [models, setModels] = useState<{ code: string; name: string }[]>([]);
   const [desiredColor, setDesiredColor] = useState('');
-  const [desiredBody, setDesiredBody] = useState('');
+  const [desiredCarroceria, setdesiredCarroceria] = useState('');
   const [desiredCondition, setDesiredCondition] = useState('');
-  const [desiredArmor, setDesiredArmor] = useState('');
+  const [desiredBlindagem, setdesiredBlindagem] = useState('');
   const [desiredKmMin, setDesiredKmMin] = useState('');
   const [desiredKmMax, setDesiredKmMax] = useState('');
   const [desiredPriceMin, setDesiredPriceMin] = useState('');
@@ -29,12 +33,15 @@ const Form = () => {
   // Current Vehicle (Tá na mão)
   const [currentType, setCurrentType] = useState('');
   const [currentBrand, setCurrentBrand] = useState('');
+  const [brandsCurrent, setBrandsCurrent] = useState<{ code: string; name: string }[]>([]);
   const [currentYear, setCurrentYear] = useState('');
+  const [yearsCurrent, setYearsCurrent] = useState<{ code: string; name: string }[]>([]);
   const [currentModel, setCurrentModel] = useState('');
+  const [modelsCurrent, setModelsCurrent] = useState<{ code: string; name: string }[]>([]);
   const [currentColor, setCurrentColor] = useState('');
-  const [currentBody, setCurrentBody] = useState('');
+  const [currentCarroceria, setcurrentCarroceria] = useState('');
   const [currentCondition, setCurrentCondition] = useState('');
-  const [currentArmor, setCurrentArmor] = useState('');
+  const [currentBlindagem, setcurrentBlindagem] = useState('');
   const [currentKm, setCurrentKm] = useState('');
   const [currentPrice, setCurrentPrice] = useState('');
   const [currentObservations, setCurrentObservations] = useState('');
@@ -45,15 +52,141 @@ const Form = () => {
       lead: { leadName, leadEmail, leadPhone },
       desired: {
         desiredType, desiredBrand, desiredYear, desiredModel, desiredColor, 
-        desiredBody, desiredCondition, desiredArmor, desiredKmMin, desiredKmMax,
+        desiredCarroceria, desiredCondition, desiredBlindagem, desiredKmMin, desiredKmMax,
         desiredPriceMin, desiredPriceMax, desiredObservations
       },
       current: {
         currentType, currentBrand, currentYear, currentModel, currentColor,
-        currentBody, currentCondition, currentArmor, currentKm, currentPrice, currentObservations
+        currentCarroceria, currentCondition, currentBlindagem, currentKm, currentPrice, currentObservations
       }
     });
   };
+
+  const mapVehicleType = (tipo: string) => {
+    if (tipo === 'carro') return 'cars';
+    if (tipo === 'moto') return 'motorcycles';
+    return '';
+  };
+
+    useEffect(() => {
+    // Quando o tipo do veículo mudar, limpa os campos dependentes
+    setDesiredBrand('');
+    setDesiredYear('');
+    setDesiredModel('');
+    setYears([]);
+    setModels([]);
+  }, [desiredType]);
+
+  // UseEffect para buscar marcas da API
+  useEffect(() => {
+    const fetchBrands = async () => {
+      const tipoAPI = mapVehicleType(desiredType);
+      if (!tipoAPI) return;
+
+      try {
+        const response = await fetch(`http://localhost:3001/api/fipe/${tipoAPI}/brands`);
+        const data = await response.json();
+        setBrands(data);
+      } catch (error) {
+        console.error('Erro ao buscar marcas:', error);
+        setBrands([]);
+      }
+    };
+
+  fetchBrands();
+}, [desiredType]);
+
+  // UseEffect para buscar anos da API
+  useEffect(() => {
+    const fetchYears = async () => {
+      const tipoAPI = mapVehicleType(desiredType);
+      if (!tipoAPI) return;
+
+      try {
+        const response = await fetch(`http://localhost:3001/api/fipe/${tipoAPI}/brands/${desiredBrand}/years`);
+        const data = await response.json();
+        setYears(data);
+      } catch (error) {
+        console.error('Erro ao buscar anos:', error);
+      }
+      setYears
+    };
+
+    fetchYears();
+  }, [desiredType, desiredBrand]);
+
+// UseEffect para buscar modelos da API
+  useEffect(() => {
+    const tipoAPI = mapVehicleType(desiredType);
+    if (!tipoAPI || !desiredBrand || !desiredYear) return;
+
+    const fetchModels = async () => {
+      const response = await fetch(
+        `http://localhost:3001/api/fipe/${tipoAPI}/brands/${desiredBrand}/years/${desiredYear}/models`
+      );
+      const data = await response.json();
+      setModels(data);
+    };
+
+    fetchModels();
+  }, [desiredType, desiredBrand, desiredYear]);
+
+  // UseEffect para buscar marcas do veículo atual
+  useEffect(() => {
+    const fetchCurrentBrands = async () => {
+      const tipoAPI = mapVehicleType(currentType);
+      if (!tipoAPI) return;
+
+      try {
+        const response = await fetch(`http://localhost:3001/api/fipe/${tipoAPI}/brands`);
+        const data = await response.json();
+        setBrandsCurrent(data);
+      } catch (error) {
+        console.error('Erro ao buscar marcas do veículo atual:', error);
+        setBrandsCurrent([]);
+      }
+    };
+
+    fetchCurrentBrands();
+  }, [currentType]);
+
+  // UseEffect para buscar anos do veículo atual  
+  useEffect(() => {
+    const fetchCurrentYears = async () => {
+      const tipoAPI = mapVehicleType(currentType);
+      if (!tipoAPI || !currentBrand) return;
+
+      try {
+        const response = await fetch(`http://localhost:3001/api/fipe/${tipoAPI}/brands/${currentBrand}/years`);
+        const data = await response.json();
+        setYearsCurrent(data);
+      } catch (error) {
+        console.error('Erro ao buscar anos do veículo atual:', error);
+        setYearsCurrent([]);
+      }
+    };
+    fetchCurrentYears();
+  }, [currentType, currentBrand]);
+
+  // UseEffect para buscar modelos do veículo atual
+  useEffect(() => {
+    const tipoAPI = mapVehicleType(currentType);
+    if (!tipoAPI || !currentBrand || !currentYear) return;
+
+    const fetchCurrentModels = async () => {
+      try {
+        const response = await fetch(
+          `http://localhost:3001/api/fipe/${tipoAPI}/brands/${currentBrand}/years/${currentYear}/models`
+        );
+        const data = await response.json();
+        setModelsCurrent(data);
+      } catch (error) {
+        console.error('Erro ao buscar modelos do veículo atual:', error);
+        setModelsCurrent([]);
+      }
+    };
+    fetchCurrentModels();
+  }, [currentType, currentBrand, currentYear]);
 
   return (
     <div 
@@ -103,8 +236,6 @@ const Form = () => {
                 <SelectContent>
                   <SelectItem value="carro">Carro</SelectItem>
                   <SelectItem value="moto">Moto</SelectItem>
-                  <SelectItem value="caminhao">Caminhão</SelectItem>
-                  <SelectItem value="suv">SUV</SelectItem>
                 </SelectContent>
               </Select>
 
@@ -113,51 +244,87 @@ const Form = () => {
                   <SelectValue placeholder="Marca" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="toyota">Toyota</SelectItem>
-                  <SelectItem value="honda">Honda</SelectItem>
-                  <SelectItem value="ford">Ford</SelectItem>
-                  <SelectItem value="chevrolet">Chevrolet</SelectItem>
-                  <SelectItem value="volkswagen">Volkswagen</SelectItem>
+                  {brands.map((brand) => (
+                    <SelectItem key={brand.code} value={brand.code}>
+                      {brand.name}
+                    </SelectItem>
+                  ))}
                 </SelectContent>
               </Select>
 
-              <Input
-                placeholder="Ano"
-                value={desiredYear}
-                onChange={(e) => setDesiredYear(e.target.value)}
-              />
+              <Select value={desiredYear} onValueChange={setDesiredYear}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Ano" />
+                </SelectTrigger>
+                <SelectContent>
+                  {years.map((y) => (
+                    <SelectItem key={y.code} value={y.code}>
+                      {y.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
 
-              <Input
-                placeholder="Modelo"
-                value={desiredModel}
-                onChange={(e) => setDesiredModel(e.target.value)}
-              />
+              <Select value={desiredModel} onValueChange={setDesiredModel}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Modelo" />
+                </SelectTrigger>
+                <SelectContent>
+                  {models.map((m) => (
+                    <SelectItem key={m.code} value={m.code}>
+                      {m.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
 
               <Select value={desiredColor} onValueChange={setDesiredColor}>
                 <SelectTrigger>
                   <SelectValue placeholder="Cor" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="branco">Branco</SelectItem>
-                  <SelectItem value="preto">Preto</SelectItem>
-                  <SelectItem value="prata">Prata</SelectItem>
+                  {/* Cada SelectItem representa uma cor disponível para o veículo */}
+                  <SelectItem value="qualquer">Qualquer cor</SelectItem>
+                  <SelectItem value="amarelo">Amarelo</SelectItem>
                   <SelectItem value="azul">Azul</SelectItem>
+                  <SelectItem value="bege">Bege</SelectItem>
+                  <SelectItem value="branco">Branco</SelectItem>
+                  <SelectItem value="bronze">Bronze</SelectItem>
+                  <SelectItem value="cinza">Cinza</SelectItem>
+                  <SelectItem value="dourado">Dourado</SelectItem>
+                  <SelectItem value="indefinida">Indefinida</SelectItem>
+                  <SelectItem value="laranja">Laranja</SelectItem>
+                  <SelectItem value="marrom">Marrom</SelectItem>
+                  <SelectItem value="prata">Prata</SelectItem>
+                  <SelectItem value="preto">Preto</SelectItem>
+                  <SelectItem value="rosa">Rosa</SelectItem>
+                  <SelectItem value="roxo">Roxo</SelectItem>
+                  <SelectItem value="verde">Verde</SelectItem>
                   <SelectItem value="vermelho">Vermelho</SelectItem>
+                  <SelectItem value="vinho">Vinho</SelectItem>
                 </SelectContent>
               </Select>
 
-              <Select value={desiredBody} onValueChange={setDesiredBody}>
+
+              <Select value={desiredCarroceria} onValueChange={setdesiredCarroceria}>
                 <SelectTrigger>
                   <SelectValue placeholder="Carroceria" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="sedan">Sedan</SelectItem>
+                  {/* Cada SelectItem representa um tipo de carroceria disponível */}
+                  <SelectItem value="buggy">Buggy</SelectItem>
+                  <SelectItem value="conversivel">Conversível</SelectItem>
+                  <SelectItem value="cupe">Cupê</SelectItem>
                   <SelectItem value="hatch">Hatch</SelectItem>
+                  <SelectItem value="minivan">Minivan</SelectItem>
+                  <SelectItem value="perua">Perua/SW</SelectItem>
+                  <SelectItem value="picape">Picape</SelectItem>
+                  <SelectItem value="sedan">Sedã</SelectItem>
                   <SelectItem value="suv">SUV</SelectItem>
-                  <SelectItem value="pickup">Pickup</SelectItem>
-                  <SelectItem value="coupe">Coupe</SelectItem>
+                  <SelectItem value="van">Van/Utilitário/Furgão</SelectItem>
                 </SelectContent>
               </Select>
+
 
               <Select value={desiredCondition} onValueChange={setDesiredCondition}>
                 <SelectTrigger>
@@ -169,7 +336,7 @@ const Form = () => {
                 </SelectContent>
               </Select>
 
-              <Select value={desiredArmor} onValueChange={setDesiredArmor}>
+              <Select value={desiredBlindagem} onValueChange={setdesiredBlindagem}>
                 <SelectTrigger>
                   <SelectValue placeholder="Blindagem" />
                 </SelectTrigger>
@@ -228,8 +395,6 @@ const Form = () => {
                 <SelectContent>
                   <SelectItem value="carro">Carro</SelectItem>
                   <SelectItem value="moto">Moto</SelectItem>
-                  <SelectItem value="caminhao">Caminhão</SelectItem>
-                  <SelectItem value="suv">SUV</SelectItem>
                 </SelectContent>
               </Select>
 
@@ -238,49 +403,84 @@ const Form = () => {
                   <SelectValue placeholder="Marca" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="toyota">Toyota</SelectItem>
-                  <SelectItem value="honda">Honda</SelectItem>
-                  <SelectItem value="ford">Ford</SelectItem>
-                  <SelectItem value="chevrolet">Chevrolet</SelectItem>
-                  <SelectItem value="volkswagen">Volkswagen</SelectItem>
+                  {brandsCurrent.map((brand) => (
+                    <SelectItem key={brand.code} value={brand.code}>
+                      {brand.name}
+                    </SelectItem>
+                  ))}
                 </SelectContent>
               </Select>
 
-              <Input
-                placeholder="Ano"
-                value={currentYear}
-                onChange={(e) => setCurrentYear(e.target.value)}
-              />
+              <Select value={currentYear} onValueChange={setCurrentYear}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Ano" />
+                </SelectTrigger>
+                <SelectContent>
+                  {yearsCurrent.map((year) => (
+                    <SelectItem key={year.code} value={year.code}>
+                      {year.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
 
-              <Input
-                placeholder="Modelo"
-                value={currentModel}
-                onChange={(e) => setCurrentModel(e.target.value)}
-              />
+              <Select value={currentModel} onValueChange={setCurrentModel}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Modelo" />
+                </SelectTrigger>
+                <SelectContent>
+                  {modelsCurrent.map((model) => (
+                    <SelectItem key={model.code} value={model.code}>
+                      {model.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
 
               <Select value={currentColor} onValueChange={setCurrentColor}>
                 <SelectTrigger>
                   <SelectValue placeholder="Cor" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="branco">Branco</SelectItem>
-                  <SelectItem value="preto">Preto</SelectItem>
-                  <SelectItem value="prata">Prata</SelectItem>
+                  {/* Cada SelectItem representa uma cor disponível para o veículo */}
+                  <SelectItem value="qualquer">Qualquer cor</SelectItem>
+                  <SelectItem value="amarelo">Amarelo</SelectItem>
                   <SelectItem value="azul">Azul</SelectItem>
+                  <SelectItem value="bege">Bege</SelectItem>
+                  <SelectItem value="branco">Branco</SelectItem>
+                  <SelectItem value="bronze">Bronze</SelectItem>
+                  <SelectItem value="cinza">Cinza</SelectItem>
+                  <SelectItem value="dourado">Dourado</SelectItem>
+                  <SelectItem value="indefinida">Indefinida</SelectItem>
+                  <SelectItem value="laranja">Laranja</SelectItem>
+                  <SelectItem value="marrom">Marrom</SelectItem>
+                  <SelectItem value="prata">Prata</SelectItem>
+                  <SelectItem value="preto">Preto</SelectItem>
+                  <SelectItem value="rosa">Rosa</SelectItem>
+                  <SelectItem value="roxo">Roxo</SelectItem>
+                  <SelectItem value="verde">Verde</SelectItem>
                   <SelectItem value="vermelho">Vermelho</SelectItem>
+                  <SelectItem value="vinho">Vinho</SelectItem>
                 </SelectContent>
               </Select>
 
-              <Select value={currentBody} onValueChange={setCurrentBody}>
+
+              <Select value={currentCarroceria} onValueChange={setcurrentCarroceria}>
                 <SelectTrigger>
                   <SelectValue placeholder="Carroceria" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="sedan">Sedan</SelectItem>
+                  {/* Cada SelectItem representa um tipo de carroceria disponível */}
+                  <SelectItem value="buggy">Buggy</SelectItem>
+                  <SelectItem value="conversivel">Conversível</SelectItem>
+                  <SelectItem value="cupe">Cupê</SelectItem>
                   <SelectItem value="hatch">Hatch</SelectItem>
+                  <SelectItem value="minivan">Minivan</SelectItem>
+                  <SelectItem value="perua">Perua/SW</SelectItem>
+                  <SelectItem value="picape">Picape</SelectItem>
+                  <SelectItem value="sedan">Sedã</SelectItem>
                   <SelectItem value="suv">SUV</SelectItem>
-                  <SelectItem value="pickup">Pickup</SelectItem>
-                  <SelectItem value="coupe">Coupe</SelectItem>
+                  <SelectItem value="van">Van/Utilitário/Furgão</SelectItem>
                 </SelectContent>
               </Select>
 
@@ -294,7 +494,7 @@ const Form = () => {
                 </SelectContent>
               </Select>
 
-              <Select value={currentArmor} onValueChange={setCurrentArmor}>
+              <Select value={currentBlindagem} onValueChange={setcurrentBlindagem}>
                 <SelectTrigger>
                   <SelectValue placeholder="Blindagem" />
                 </SelectTrigger>
