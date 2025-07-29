@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Link } from 'react-router-dom';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
@@ -13,6 +14,12 @@ const Signup = () => {
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     console.log('Signup attempt:', { firstName, lastName, email, password });
+  };
+
+  const navigate = useNavigate();
+  const handleSignup = () => {
+    // Aqui você pode futuramente adicionar a verificação de signup
+    navigate('/form');
   };
 
   return (

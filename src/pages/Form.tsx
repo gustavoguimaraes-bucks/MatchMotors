@@ -4,6 +4,7 @@ import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
 import { Button } from '@/components/ui/button';
+import logo from '@/assets/logo.png';
 import carBackground from '@/assets/car-bg.jpg';
 
 const Form = () => {
@@ -188,19 +189,23 @@ const Form = () => {
     fetchCurrentModels();
   }, [currentType, currentBrand, currentYear]);
 
-  return (
+
+
+  return ( 
     <div 
       className="min-h-screen bg-black bg-cover bg-center relative"
       style={{ backgroundImage: `url(${carBackground})` }}
     >
-      <div className="absolute inset-0 bg-black bg-opacity-70"></div>
+      <div className="imagemlogo" style={{ marginTop: '50px', display: 'flex', justifyContent: 'center' }}>
+        <img src={logo} width="400px" alt="Logo MatchMotors" className="h-16" />
+      </div>
       
       <div className="relative z-10 container mx-auto p-8">
         <form onSubmit={handleSubmit} className="max-w-4xl mx-auto space-y-12">
           
           {/* Lead Information Section */}
           <div className="bg-black/80 rounded-lg p-6 shadow-outset border border-white">
-            <h2 className="text-2xl font-bold text-white mb-6">Informações do Lead</h2>
+            <h2 className="text-2xl font-bold text-white mb-6" style={{ fontFamily: 'Arial, sans-serif' }}>Informações do Lead</h2>
             <div className="grid md:grid-cols-3 gap-4">
               <Input
                 placeholder="Nome"

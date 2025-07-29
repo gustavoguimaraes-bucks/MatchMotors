@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Link } from 'react-router-dom';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
@@ -12,6 +13,12 @@ const Login = () => {
     e.preventDefault();
     console.log('Login attempt:', { email, password });
   };
+
+  const navigate = useNavigate();
+  const handleLogin = () => {
+  // Aqui você pode futuramente adicionar a verificação de login
+  navigate('/form');
+};
 
   return (
     <div 
@@ -48,7 +55,7 @@ const Login = () => {
             />
           </div>
 
-          <Button type="submit" className="w-full">
+          <Button onClick={handleLogin} type="submit" className="w-full">
             Entrar
           </Button>
 
