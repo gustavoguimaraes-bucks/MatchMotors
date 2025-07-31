@@ -1,79 +1,139 @@
-import React, { useState } from 'react';
-import { useEffect } from 'react';
-import { Input } from '@/components/ui/input';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Textarea } from '@/components/ui/textarea';
-import { Button } from '@/components/ui/button';
-import logo from '@/assets/logo.png';
-import carBackground from '@/assets/car-bg.jpg';
+import React, { useState } from "react";
+import { useEffect } from "react";
+import { Input } from "@/components/ui/input";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Textarea } from "@/components/ui/textarea";
+import { Button } from "@/components/ui/button";
+import logo from "@/assets/logo.png";
+import carBackground from "@/assets/car-bg.jpg";
 
 const Form = () => {
   // Lead Information
-  const [leadName, setLeadName] = useState('');
-  const [leadEmail, setLeadEmail] = useState('');
-  const [leadPhone, setLeadPhone] = useState('');
+  const [leadName, setLeadName] = useState("");
+  const [leadEmail, setLeadEmail] = useState("");
+  const [leadPhone, setLeadPhone] = useState("");
 
   // Desired Vehicle
-  const [desiredType, setDesiredType] = useState('');
-  const [desiredBrand, setDesiredBrand] = useState('');
+  const [desiredType, setDesiredType] = useState("");
+  const [desiredBrand, setDesiredBrand] = useState("");
   const [brands, setBrands] = useState<{ code: string; name: string }[]>([]);
-  const [desiredYear, setDesiredYear] = useState('');
+  const [desiredYear, setDesiredYear] = useState("");
   const [years, setYears] = useState<{ code: string; name: string }[]>([]);
-  const [desiredModel, setDesiredModel] = useState('');
+  const [desiredModel, setDesiredModel] = useState("");
   const [models, setModels] = useState<{ code: string; name: string }[]>([]);
-  const [desiredColor, setDesiredColor] = useState('');
-  const [desiredCarroceria, setdesiredCarroceria] = useState('');
-  const [desiredCondition, setDesiredCondition] = useState('');
-  const [desiredBlindagem, setdesiredBlindagem] = useState('');
-  const [desiredKmMin, setDesiredKmMin] = useState('');
-  const [desiredKmMax, setDesiredKmMax] = useState('');
-  const [desiredPriceMin, setDesiredPriceMin] = useState('');
-  const [desiredPriceMax, setDesiredPriceMax] = useState('');
-  const [desiredObservations, setDesiredObservations] = useState('');
+  const [desiredColor, setDesiredColor] = useState("");
+  const [desiredCarroceria, setdesiredCarroceria] = useState("");
+  const [desiredCondition, setDesiredCondition] = useState("");
+  const [desiredBlindagem, setdesiredBlindagem] = useState("");
+  const [desiredKmMin, setDesiredKmMin] = useState("");
+  const [desiredKmMax, setDesiredKmMax] = useState("");
+  const [desiredPriceMin, setDesiredPriceMin] = useState("");
+  const [desiredPriceMax, setDesiredPriceMax] = useState("");
+  const [desiredObservations, setDesiredObservations] = useState("");
 
   // Current Vehicle (Tá na mão)
-  const [currentType, setCurrentType] = useState('');
-  const [currentBrand, setCurrentBrand] = useState('');
-  const [brandsCurrent, setBrandsCurrent] = useState<{ code: string; name: string }[]>([]);
-  const [currentYear, setCurrentYear] = useState('');
-  const [yearsCurrent, setYearsCurrent] = useState<{ code: string; name: string }[]>([]);
-  const [currentModel, setCurrentModel] = useState('');
-  const [modelsCurrent, setModelsCurrent] = useState<{ code: string; name: string }[]>([]);
-  const [currentColor, setCurrentColor] = useState('');
-  const [currentCarroceria, setcurrentCarroceria] = useState('');
-  const [currentCondition, setCurrentCondition] = useState('');
-  const [currentBlindagem, setcurrentBlindagem] = useState('');
-  const [currentKm, setCurrentKm] = useState('');
-  const [currentPrice, setCurrentPrice] = useState('');
-  const [currentObservations, setCurrentObservations] = useState('');
+  const [currentType, setCurrentType] = useState("");
+  const [currentBrand, setCurrentBrand] = useState("");
+  const [brandsCurrent, setBrandsCurrent] = useState<
+    { code: string; name: string }[]
+  >([]);
+  const [currentYear, setCurrentYear] = useState("");
+  const [yearsCurrent, setYearsCurrent] = useState<
+    { code: string; name: string }[]
+  >([]);
+  const [currentModel, setCurrentModel] = useState("");
+  const [modelsCurrent, setModelsCurrent] = useState<
+    { code: string; name: string }[]
+  >([]);
+  const [currentColor, setCurrentColor] = useState("");
+  const [currentCarroceria, setcurrentCarroceria] = useState("");
+  const [currentCondition, setCurrentCondition] = useState("");
+  const [currentBlindagem, setcurrentBlindagem] = useState("");
+  const [currentKm, setCurrentKm] = useState("");
+  const [currentPrice, setCurrentPrice] = useState("");
+  const [currentObservations, setCurrentObservations] = useState("");
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    console.log('Form submitted:', {
-      lead: { leadName, leadEmail, leadPhone },
-      desired: {
-        desiredType, desiredBrand, desiredYear, desiredModel, desiredColor, 
-        desiredCarroceria, desiredCondition, desiredBlindagem, desiredKmMin, desiredKmMax,
-        desiredPriceMin, desiredPriceMax, desiredObservations
-      },
-      current: {
-        currentType, currentBrand, currentYear, currentModel, currentColor,
-        currentCarroceria, currentCondition, currentBlindagem, currentKm, currentPrice, currentObservations
-      }
-    });
+const handleSubmit = async (e: React.FormEvent) => {
+  e.preventDefault();
+
+  const desired = {
+    desiredType,
+    desiredBrand,
+    desiredYear,
+    desiredModel,
+    desiredColor,
+    desiredCarroceria,
+    desiredCondition,
+    desiredBlindagem,
+    desiredKmMin,
+    desiredKmMax,
+    desiredPriceMin,
+    desiredPriceMax,
+    desiredObservations,
   };
+
+  const current = {
+    currentType,
+    currentBrand,
+    currentYear,
+    currentModel,
+    currentColor,
+    currentCarroceria,
+    currentCondition,
+    currentBlindagem,
+    currentKm,
+    currentPrice,
+    currentObservations,
+  };
+
+  const payload = {
+    lead: { leadName, leadEmail, leadPhone },
+    desired,
+    current,
+  };
+
+  try {
+    const response = await fetch("http://localhost:3001/api/leads", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload),
+    });
+
+    if (!response.ok) throw new Error("Erro ao enviar os dados");
+    const result = await response.json();
+    console.log("Lead enviado com sucesso:", result);
+    alert("Lead cadastrado com sucesso!");
+  } catch (error) {
+    console.error("Erro ao enviar dados:", error);
+    alert("Erro ao cadastrar lead.");
+  }
+};
 
   const mapVehicleType = (tipo: string) => {
-    if (tipo === 'carro') return 'cars';
-    if (tipo === 'moto') return 'motorcycles';
-    return '';
+    if (tipo === "carro") return "cars";
+    if (tipo === "moto") return "motorcycles";
+    return "";
   };
 
-    useEffect(() => {
+  useEffect(() => {
     // Quando o tipo do veículo mudar, limpa os campos dependentes
-    setDesiredBrand('');
-    setDesiredYear('');
-    setDesiredModel('');
+    setDesiredYear("");
+    setDesiredModel("");
+    setYears([]);
+    setModels([]);
+  }, [desiredBrand]);
+
+  useEffect(() => {
+    // Quando o tipo do veículo mudar, limpa os campos dependentes
+    setDesiredBrand("");
+    setDesiredYear("");
+    setDesiredModel("");
     setYears([]);
     setModels([]);
   }, [desiredType]);
@@ -85,17 +145,32 @@ const Form = () => {
       if (!tipoAPI) return;
 
       try {
-        const response = await fetch(`http://localhost:3001/api/fipe/${tipoAPI}/brands`);
+        const response = await fetch(
+          `http://localhost:3001/api/fipe/${tipoAPI}/brands`
+        );
         const data = await response.json();
+
+        // Verifica se houve dados antes de setar
+        if (!data || !data.length) {
+          setBrands([]);
+          setYears([]);
+          setModels([]);
+          setDesiredBrand("");
+          setDesiredYear("");
+          setDesiredModel("");
+          return;
+        }
+
+        // Se os dados forem válidos, define normalmente
         setBrands(data);
       } catch (error) {
-        console.error('Erro ao buscar marcas:', error);
+        console.error("Erro ao buscar marcas:", error);
         setBrands([]);
       }
     };
 
-  fetchBrands();
-}, [desiredType]);
+    fetchBrands();
+  }, [desiredType]);
 
   // UseEffect para buscar anos da API
   useEffect(() => {
@@ -104,19 +179,21 @@ const Form = () => {
       if (!tipoAPI) return;
 
       try {
-        const response = await fetch(`http://localhost:3001/api/fipe/${tipoAPI}/brands/${desiredBrand}/years`);
+        const response = await fetch(
+          `http://localhost:3001/api/fipe/${tipoAPI}/brands/${desiredBrand}/years`
+        );
         const data = await response.json();
         setYears(data);
       } catch (error) {
-        console.error('Erro ao buscar anos:', error);
+        console.error("Erro ao buscar anos:", error);
       }
-      setYears
+      setYears;
     };
 
     fetchYears();
   }, [desiredType, desiredBrand]);
 
-// UseEffect para buscar modelos da API
+  // UseEffect para buscar modelos da API
   useEffect(() => {
     const tipoAPI = mapVehicleType(desiredType);
     if (!tipoAPI || !desiredBrand || !desiredYear) return;
@@ -139,11 +216,13 @@ const Form = () => {
       if (!tipoAPI) return;
 
       try {
-        const response = await fetch(`http://localhost:3001/api/fipe/${tipoAPI}/brands`);
+        const response = await fetch(
+          `http://localhost:3001/api/fipe/${tipoAPI}/brands`
+        );
         const data = await response.json();
         setBrandsCurrent(data);
       } catch (error) {
-        console.error('Erro ao buscar marcas do veículo atual:', error);
+        console.error("Erro ao buscar marcas do veículo atual:", error);
         setBrandsCurrent([]);
       }
     };
@@ -151,18 +230,20 @@ const Form = () => {
     fetchCurrentBrands();
   }, [currentType]);
 
-  // UseEffect para buscar anos do veículo atual  
+  // UseEffect para buscar anos do veículo atual
   useEffect(() => {
     const fetchCurrentYears = async () => {
       const tipoAPI = mapVehicleType(currentType);
       if (!tipoAPI || !currentBrand) return;
 
       try {
-        const response = await fetch(`http://localhost:3001/api/fipe/${tipoAPI}/brands/${currentBrand}/years`);
+        const response = await fetch(
+          `http://localhost:3001/api/fipe/${tipoAPI}/brands/${currentBrand}/years`
+        );
         const data = await response.json();
         setYearsCurrent(data);
       } catch (error) {
-        console.error('Erro ao buscar anos do veículo atual:', error);
+        console.error("Erro ao buscar anos do veículo atual:", error);
         setYearsCurrent([]);
       }
     };
@@ -182,30 +263,41 @@ const Form = () => {
         const data = await response.json();
         setModelsCurrent(data);
       } catch (error) {
-        console.error('Erro ao buscar modelos do veículo atual:', error);
+        console.error("Erro ao buscar modelos do veículo atual:", error);
         setModelsCurrent([]);
       }
     };
     fetchCurrentModels();
   }, [currentType, currentBrand, currentYear]);
 
-
-
-  return ( 
-    <div 
+  return (
+    <div
       className="min-h-screen bg-black bg-cover bg-center relative"
       style={{ backgroundImage: `url(${carBackground})` }}
     >
-      <div className="imagemlogo" style={{ marginTop: '50px', display: 'flex', justifyContent: 'center' }}>
-        <img src={logo} width="400px" alt="Logo MatchMotors" className="h-16" />
+      <div
+        className="imagemlogo"
+        style={{ marginTop: "50px", display: "flex", justifyContent: "center" }}
+      >
+        <img
+          src={logo}
+          width="400px"
+          height="10000px"
+          alt="Logo MatchMotors"
+          className="h-16"
+        />
       </div>
-      
+
       <div className="relative z-10 container mx-auto p-8">
         <form onSubmit={handleSubmit} className="max-w-4xl mx-auto space-y-12">
-          
           {/* Lead Information Section */}
           <div className="bg-black/80 rounded-lg p-6 shadow-outset border border-white">
-            <h2 className="text-2xl font-bold text-white mb-6" style={{ fontFamily: 'Arial, sans-serif' }}>Informações do Lead</h2>
+            <h2
+              className="text-2xl font-bold text-white mb-6"
+              style={{ fontFamily: "Arial, sans-serif" }}
+            >
+              Informações do Lead
+            </h2>
             <div className="grid md:grid-cols-3 gap-4">
               <Input
                 placeholder="Nome"
@@ -232,7 +324,9 @@ const Form = () => {
 
           {/* Desired Vehicle Section */}
           <div className="bg-black/80 rounded-lg p-6 shadow-outset border border-white">
-            <h2 className="text-2xl font-bold text-white mb-6">Veículo Desejado</h2>
+            <h2 className="text-2xl font-bold text-white mb-6">
+              Veículo Desejado
+            </h2>
             <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
               <Select value={desiredType} onValueChange={setDesiredType}>
                 <SelectTrigger>
@@ -310,8 +404,10 @@ const Form = () => {
                 </SelectContent>
               </Select>
 
-
-              <Select value={desiredCarroceria} onValueChange={setdesiredCarroceria}>
+              <Select
+                value={desiredCarroceria}
+                onValueChange={setdesiredCarroceria}
+              >
                 <SelectTrigger>
                   <SelectValue placeholder="Carroceria" />
                 </SelectTrigger>
@@ -330,8 +426,10 @@ const Form = () => {
                 </SelectContent>
               </Select>
 
-
-              <Select value={desiredCondition} onValueChange={setDesiredCondition}>
+              <Select
+                value={desiredCondition}
+                onValueChange={setDesiredCondition}
+              >
                 <SelectTrigger>
                   <SelectValue placeholder="Novo ou Usado" />
                 </SelectTrigger>
@@ -341,7 +439,10 @@ const Form = () => {
                 </SelectContent>
               </Select>
 
-              <Select value={desiredBlindagem} onValueChange={setdesiredBlindagem}>
+              <Select
+                value={desiredBlindagem}
+                onValueChange={setdesiredBlindagem}
+              >
                 <SelectTrigger>
                   <SelectValue placeholder="Blindagem" />
                 </SelectTrigger>
@@ -469,8 +570,10 @@ const Form = () => {
                 </SelectContent>
               </Select>
 
-
-              <Select value={currentCarroceria} onValueChange={setcurrentCarroceria}>
+              <Select
+                value={currentCarroceria}
+                onValueChange={setcurrentCarroceria}
+              >
                 <SelectTrigger>
                   <SelectValue placeholder="Carroceria" />
                 </SelectTrigger>
@@ -489,7 +592,10 @@ const Form = () => {
                 </SelectContent>
               </Select>
 
-              <Select value={currentCondition} onValueChange={setCurrentCondition}>
+              <Select
+                value={currentCondition}
+                onValueChange={setCurrentCondition}
+              >
                 <SelectTrigger>
                   <SelectValue placeholder="Novo ou Usado" />
                 </SelectTrigger>
@@ -499,7 +605,10 @@ const Form = () => {
                 </SelectContent>
               </Select>
 
-              <Select value={currentBlindagem} onValueChange={setcurrentBlindagem}>
+              <Select
+                value={currentBlindagem}
+                onValueChange={setcurrentBlindagem}
+              >
                 <SelectTrigger>
                   <SelectValue placeholder="Blindagem" />
                 </SelectTrigger>
@@ -534,11 +643,15 @@ const Form = () => {
           </div>
 
           <div className="flex justify-center">
-            <Button type="submit" size="lg" className="px-12">
-              <a href="http://localhost:8080/login">Match!</a>
+            <Button
+              onClick={handleSubmit}
+              type="submit"
+              size="lg"
+              className="px-12"
+            >
+              Match!
             </Button>
           </div>
-
         </form>
       </div>
     </div>

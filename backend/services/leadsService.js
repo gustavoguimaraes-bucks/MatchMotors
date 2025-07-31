@@ -9,7 +9,7 @@ exports.inserirLeadCompleto = async (data) => {
 
     // 1. Inserir lead
     const insertLead = `
-      INSERT INTO leads (nome, email, telefone)
+      INSERT INTO leads (nome_do_lead, email_do_lead, telefone_do_lead)
       VALUES ($1, $2, $3)
       RETURNING id
     `;
@@ -27,26 +27,26 @@ exports.inserirLeadCompleto = async (data) => {
     `;
     await client.query(insertDesejado, [
       leadId,
-      data.desejado.marca,
-      data.desejado.modelo,
-      data.desejado.ano,
-      data.desejado.cor,
-      data.desejado.carroceria,
+      data.desired.desiredBrand,
+      data.desired.desiredModel,
+      data.desired.desiredYear,
+      data.desired.desiredColor,
+      data.desired.desiredCarroceria,
     ]);
 
     // 3. Inserir carro na troca (se enviado)
-    if (data.troca) {
+    if (data.current) {
       const insertTroca = `
         INSERT INTO carros_troca (lead_id, marca, modelo, ano, cor, carroceria)
         VALUES ($1, $2, $3, $4, $5, $6)
       `;
       await client.query(insertTroca, [
         leadId,
-        data.troca.marca,
-        data.troca.modelo,
-        data.troca.ano,
-        data.troca.cor,
-        data.troca.carroceria,
+        data.current.currentBrand,
+        data.current.currentModel,
+        data.current.currentYear,
+        data.current.currentColor,
+        data.current.currentCarroceria,
       ]);
     }
 

@@ -1,12 +1,21 @@
 const leadsService = require('../services/leadsService');
 
-// Controlador que recebe a requisição e chama o serviço
-exports.criarLead = async (req, res) => {
+exports.createLead = async (req, res) => {
   try {
-    const resultado = await leadsService.inserirLeadCompleto(req.body);
-    res.status(201).json(resultado); // Retorna o que foi inserido
+    const { lead, desired, current } = req.body;
+
+const result = await leadsService.inserirLeadCompleto({
+  nome: lead.leadName,
+  email: lead.leadEmail,
+  telefone: lead.leadPhone,
+  desired: desired,
+  current: current,
+});
+
+    res.status(201).json({ message: "Lead inserido com sucesso!", idLead: result.leadId });
   } catch (error) {
-    console.error('Erro ao criar lead:', error.message);
-    res.status(500).json({ erro: 'Erro ao criar lead' });
+    console.error("Erro ao inserir lead:", error);
+    res.status(500).json({ error: "Erro ao inserir dados no banco" });
   }
 };
+
