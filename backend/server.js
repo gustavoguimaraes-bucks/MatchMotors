@@ -4,13 +4,14 @@ const pool = require('./db'); // Importa a conexão com o banco
 require('dotenv').config();
 const leadsRoutes = require('./routes/leadsRoutes');
 const fipeRoutes = require('./routes/fipeRoutes')
-
+const matchRoutes = require('./routes/matchRoutes');
 
 const app = express();
 app.use(cors());
 app.use(express.json());
 app.use('/api/leads', leadsRoutes);
 app.use('/api/fipe', fipeRoutes);
+app.use('/api/match', matchRoutes);
 
 app.get('/test-db', async (req, res) => {
   try {

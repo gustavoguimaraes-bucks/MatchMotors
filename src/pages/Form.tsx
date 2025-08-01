@@ -106,9 +106,33 @@ const handleSubmit = async (e: React.FormEvent) => {
     });
 
     if (!response.ok) throw new Error("Erro ao enviar os dados");
+
     const result = await response.json();
     console.log("Lead enviado com sucesso:", result);
-    alert("Lead cadastrado com sucesso!");
+
+    // 🔍 Após cadastrar o lead, buscar match
+    try {
+      const matchResponse = await fetch("http://localhost:3001/api/match", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ desired }),
+      });
+
+      const matchData = await matchResponse.json();
+
+      if (matchData.found) {
+        const carro = matchData.carro;
+        const leadMatch = matchData.lead;
+        alert(
+          `✅ MATCH ENCONTRADO!\n\n🚗 Veículo: ${carro.marca} ${carro.modelo} ${carro.ano}\n👤 Dono: ${leadMatch.nome} (${leadMatch.telefone})`
+        );
+      } else {
+        alert("Lead cadastrado com sucesso! Nenhum match encontrado no momento.");
+      }
+    } catch (error) {
+      console.error("Erro ao buscar match:", error);
+      alert("Lead cadastrado, mas houve erro ao buscar match.");
+    }
   } catch (error) {
     console.error("Erro ao enviar dados:", error);
     alert("Erro ao cadastrar lead.");
@@ -646,7 +670,6 @@ const handleSubmit = async (e: React.FormEvent) => {
             <Button
               onClick={handleSubmit}
               type="submit"
-              size="lg"
               className="px-12"
             >
               Match!
