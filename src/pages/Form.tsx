@@ -59,85 +59,132 @@ const Form = () => {
   const [currentPrice, setCurrentPrice] = useState("");
   const [currentObservations, setCurrentObservations] = useState("");
 
-const handleSubmit = async (e: React.FormEvent) => {
-  e.preventDefault();
+  const getNomeCompletoDoCarro = async (
+    tipo: string,
+    marcaCode: string,
+    anoCode: string,
+    modeloCode: string
+  ) => {
+    const tipoAPI = tipo === "carro" ? "cars" : "motorcycles";
 
-  const desired = {
-    desiredType,
-    desiredBrand,
-    desiredYear,
-    desiredModel,
-    desiredColor,
-    desiredCarroceria,
-    desiredCondition,
-    desiredBlindagem,
-    desiredKmMin,
-    desiredKmMax,
-    desiredPriceMin,
-    desiredPriceMax,
-    desiredObservations,
+    // Consulta modelo (retorna nome da marca e modelo)
+    const modeloResponse = await fetch(
+      `http://localhost:3001/api/fipe/${tipoAPI}/brands/${marcaCode}/years/${anoCode}/models`
+    );
+    const modeloData = await modeloResponse.json();
+
+    const nomeModelo =
+      modeloData.find((m) => m.code === modeloCode)?.name || modeloCode;
+
+    // Consulta marca
+    const marcasResponse = await fetch(
+      `http://localhost:3001/api/fipe/${tipoAPI}/brands`
+    );
+    const marcasData = await marcasResponse.json();
+
+    const nomeMarca =
+      marcasData.find((m) => m.code === marcaCode)?.name || marcaCode;
+
+    // Consulta ano
+    const anosResponse = await fetch(
+      `http://localhost:3001/api/fipe/${tipoAPI}/brands/${marcaCode}/years`
+    );
+    const anosData = await anosResponse.json();
+
+    const nomeAno = anosData.find((a) => a.code === anoCode)?.name || anoCode;
+
+    return `${nomeMarca} ${nomeModelo} ${nomeAno}`;
   };
 
-  const current = {
-    currentType,
-    currentBrand,
-    currentYear,
-    currentModel,
-    currentColor,
-    currentCarroceria,
-    currentCondition,
-    currentBlindagem,
-    currentKm,
-    currentPrice,
-    currentObservations,
-  };
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
 
-  const payload = {
-    lead: { leadName, leadEmail, leadPhone },
-    desired,
-    current,
-  };
+    const desired = {
+      desiredType,
+      desiredBrand,
+      desiredYear,
+      desiredModel,
+      desiredColor,
+      desiredCarroceria,
+      desiredCondition,
+      desiredBlindagem,
+      desiredKmMin,
+      desiredKmMax,
+      desiredPriceMin,
+      desiredPriceMax,
+      desiredObservations,
+    };
 
-  try {
-    const response = await fetch("http://localhost:3001/api/leads", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(payload),
-    });
+    const current = {
+      currentType,
+      currentBrand,
+      currentYear,
+      currentModel,
+      currentColor,
+      currentCarroceria,
+      currentCondition,
+      currentBlindagem,
+      currentKm,
+      currentPrice,
+      currentObservations,
+    };
 
-    if (!response.ok) throw new Error("Erro ao enviar os dados");
+    const payload = {
+      lead: { leadName, leadEmail, leadPhone },
+      desired,
+      current,
+    };
 
-    const result = await response.json();
-    console.log("Lead enviado com sucesso:", result);
-
-    // 🔍 Após cadastrar o lead, buscar match
     try {
-      const matchResponse = await fetch("http://localhost:3001/api/match", {
+      const response = await fetch("http://localhost:3001/api/leads", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ desired }),
+        body: JSON.stringify(payload),
       });
 
-      const matchData = await matchResponse.json();
+      if (!response.ok) throw new Error("Erro ao enviar os dados");
 
-      if (matchData.found) {
-        const carro = matchData.carro;
-        const leadMatch = matchData.lead;
-        alert(
-          `✅ MATCH ENCONTRADO!\n\n🚗 Veículo: ${carro.marca} ${carro.modelo} ${carro.ano}\n👤 Dono: ${leadMatch.nome} (${leadMatch.telefone})`
-        );
-      } else {
-        alert("Lead cadastrado com sucesso! Nenhum match encontrado no momento.");
+      const result = await response.json();
+      console.log("Lead enviado com sucesso:", result);
+
+      // 🔍 Após cadastrar o lead, buscar match
+      try {
+        const matchResponse = await fetch("http://localhost:3001/api/match", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ desired }),
+        });
+
+        const matchData = await matchResponse.json();
+
+        if (matchData.found) {
+          const carro = matchData.carro;
+          const leadMatch = matchData.lead;
+
+          const nomeCompleto = await getNomeCompletoDoCarro(
+            carro.tipo || "carro",
+            carro.marca,
+            carro.ano,
+            carro.modelo
+          );
+
+          alert(
+            `✅ MATCH ENCONTRADO!\n\n🚗 Veículo: ${nomeCompleto}\n👤 Dono: ${leadMatch.nome} (${leadMatch.telefone})`
+          );
+        } else {
+          alert(
+            "Lead cadastrado com sucesso! Nenhum match encontrado no momento."
+          );
+        }
+      } catch (error) {
+        console.error("Erro ao buscar match:", error);
+        alert("Lead cadastrado, mas houve erro ao buscar match.");
       }
     } catch (error) {
-      console.error("Erro ao buscar match:", error);
-      alert("Lead cadastrado, mas houve erro ao buscar match.");
+      console.error("Erro ao enviar dados:", error);
+      alert("Erro ao cadastrar lead.");
     }
-  } catch (error) {
-    console.error("Erro ao enviar dados:", error);
-    alert("Erro ao cadastrar lead.");
-  }
-};
+  };
 
   const mapVehicleType = (tipo: string) => {
     if (tipo === "carro") return "cars";
@@ -667,11 +714,7 @@ const handleSubmit = async (e: React.FormEvent) => {
           </div>
 
           <div className="flex justify-center">
-            <Button
-              onClick={handleSubmit}
-              type="submit"
-              className="px-12"
-            >
+            <Button onClick={handleSubmit} type="submit" className="px-12">
               Match!
             </Button>
           </div>
