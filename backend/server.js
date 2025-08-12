@@ -5,6 +5,7 @@ require('dotenv').config();
 const leadsRoutes = require('./routes/leadsRoutes');
 const fipeRoutes = require('./routes/fipeRoutes')
 const matchRoutes = require('./routes/matchRoutes');
+const matchHistoryRoutes = require('./routes/matchHistoryRoutes');
 
 const app = express();
 app.use(cors());
@@ -12,6 +13,7 @@ app.use(express.json());
 app.use('/api/leads', leadsRoutes);
 app.use('/api/fipe', fipeRoutes);
 app.use('/api/match', matchRoutes);
+app.use('/api/matches', matchHistoryRoutes);
 
 app.get('/test-db', async (req, res) => {
   try {
