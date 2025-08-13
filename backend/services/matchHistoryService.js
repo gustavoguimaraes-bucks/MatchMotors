@@ -1,9 +1,33 @@
-const db = require('../db');
+const db = require("../db");
+const fipeService = require("./fipeService");
 
+//Insere matches na tabela do banco de dados
 exports.salvarMatch = async ({ leadId, matchedLeadId, desired, available }) => {
   const client = await db.connect();
 
   try {
+    // Define os campos específicos para salvar (ajuste conforme sua estrutura do Form)
+    const desiredInfo = {
+      tipo: desired.desiredType,
+      marca: desired.desiredBrand,
+      modelo: desired.desiredModel,
+      ano: desired.desiredYear,
+      cor: desired.desiredColor,
+      carroceria: desired.desiredCarroceria,
+    };
+
+    const availableInfo = {
+      tipo: available.tipo || "carro", // ou "moto" — adicione isso no back se necessário
+      marca: available.marca,
+      modelo: available.modelo,
+      ano: available.ano,
+      cor: available.cor,
+      carroceria: available.carroceria,
+    };
+
+    const desiredFormatado = await fipeService.formatarCarro(desiredInfo);
+    const availableFormatado = await fipeService.formatarCarro(availableInfo);
+
     const query = `
       INSERT INTO matches (lead_id, matched_lead_id, desired_info, available_info)
       VALUES ($1, $2, $3, $4)
@@ -13,8 +37,8 @@ exports.salvarMatch = async ({ leadId, matchedLeadId, desired, available }) => {
     const values = [
       leadId,
       matchedLeadId,
-      JSON.stringify(desired),
-      JSON.stringify(available),
+      JSON.stringify(desiredFormatado),
+      JSON.stringify(availableFormatado),
     ];
 
     const result = await client.query(query, values);
@@ -24,11 +48,12 @@ exports.salvarMatch = async ({ leadId, matchedLeadId, desired, available }) => {
   }
 };
 
+// Lista matches que aconteceram
 exports.listarTodos = async () => {
   const client = await db.connect();
   try {
     const result = await client.query(`
-      SELECT m.id, m.status, m.match_date,
+      SELECT m.id, m.match_date,
              l.nome_do_lead, l.email_do_lead, l.telefone_do_lead,
              m.desired_info, m.available_info
       FROM matches m
@@ -36,7 +61,7 @@ exports.listarTodos = async () => {
       ORDER BY m.match_date DESC
     `);
 
-    return result.rows.map(row => ({
+    return result.rows.map((row) => ({
       id: row.id,
       leadName: row.nome_do_lead,
       leadEmail: row.email_do_lead,
@@ -44,7 +69,7 @@ exports.listarTodos = async () => {
       desiredVehicle: row.desired_info,
       availableVehicle: row.available_info,
       matchDate: row.match_date,
-      status: row.status
+      status: row.status,
     }));
   } finally {
     client.release();
