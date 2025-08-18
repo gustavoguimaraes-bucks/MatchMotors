@@ -152,7 +152,7 @@ const Form = () => {
         const matchResponse = await fetch("http://localhost:3001/api/match", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ desired }),
+          body: JSON.stringify({ desired, leadId: result.idLead }),
         });
 
         const matchData = await matchResponse.json();
@@ -160,6 +160,18 @@ const Form = () => {
         if (matchData.found) {
           const carro = matchData.carro;
           const leadMatch = matchData.lead;
+
+          
+          await fetch("http://localhost:3001/api/matches", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              leadId: result.idLead,
+              matchedLeadId: carro.lead_id,
+              desired,
+              available: carro,
+            }),
+          });
 
           const nomeCompleto = await getNomeCompletoDoCarro(
             carro.tipo || "carro",

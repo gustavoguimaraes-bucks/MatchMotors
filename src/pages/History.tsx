@@ -3,111 +3,53 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { ArrowLeft, Car, User, Calendar, Phone, Mail } from "lucide-react";
 import { Link } from "react-router-dom";
-// import { useEffect, useState } from "react";
-
-// const History = () => {
-//   const [matches, setMatches] = useState([]);
-
-//   useEffect(() => {
-//     const fetchMatches = async () => {
-//       try {
-//         const res = await fetch("http://localhost:3001/api/matches");
-//         const data = await res.json();
-//         setMatches(data); // ← deve vir como array do back
-//       } catch (error) {
-//         console.error("Erro ao buscar matches:", error);
-//       }
-//     };
-
-//     fetchMatches();
-//   }, []);
-
-const matches = [
-  {
-    id: 1,
-    leadName: "João Silva",
-    leadEmail: "joao@email.com",
-    leadPhone: "(11) 99999-9999",
-    desiredVehicle: {
-      type: "Carro",
-      brand: "Toyota",
-      model: "Corolla",
-      year: "2022",
-      color: "Branco",
-      condition: "Usado",
-      priceRange: "R$ 80.000 - R$ 90.000"
-    },
-    availableVehicle: {
-      type: "Carro",
-      brand: "Toyota",
-      model: "Corolla",
-      year: "2021",
-      color: "Prata",
-      condition: "Usado",
-      price: "R$ 85.000"
-    },
-    matchDate: "2024-01-15",
-    status: "Ativo"
-  },
-  {
-    id: 2,
-    leadName: "Maria Santos",
-    leadEmail: "maria@email.com",
-    leadPhone: "(11) 88888-8888",
-    desiredVehicle: {
-      type: "SUV",
-      brand: "Honda",
-      model: "CR-V",
-      year: "2023",
-      color: "Preto",
-      condition: "Novo",
-      priceRange: "R$ 150.000 - R$ 180.000"
-    },
-    availableVehicle: {
-      type: "SUV",
-      brand: "Honda",
-      model: "CR-V",
-      year: "2023",
-      color: "Preto",
-      condition: "Novo",
-      price: "R$ 165.000"
-    },
-    matchDate: "2024-01-10",
-    status: "Concluído"
-  },
-  {
-    id: 3,
-    leadName: "Carlos Oliveira",
-    leadEmail: "carlos@email.com",
-    leadPhone: "(11) 77777-7777",
-    desiredVehicle: {
-      type: "Hatchback",
-      brand: "Volkswagen",
-      model: "Golf",
-      year: "2021",
-      color: "Azul",
-      condition: "Usado",
-      priceRange: "R$ 70.000 - R$ 80.000"
-    },
-    availableVehicle: {
-      type: "Hatchback",
-      brand: "Volkswagen",
-      model: "Golf",
-      year: "2020",
-      color: "Azul",
-      condition: "Usado",
-      price: "R$ 75.000"
-    },
-    matchDate: "2024-01-05",
-    status: "Pendente"
-  }
-];
+import { useEffect, useState } from "react";
 
 const History = () => {
+  const [matches, setMatches] = useState([]);
+
+  useEffect(() => {
+    const fetchMatches = async () => {
+      try {
+        const res = await fetch("http://localhost:3001/api/matches");
+        const data = await res.json();
+
+        // Mapear os campos para os nomes esperados pelo front
+        const formatado = data.map((match) => ({
+          ...match,
+          desiredVehicle: {
+            brand: match.desiredVehicle.marca,
+            model: match.desiredVehicle.modelo,
+            year: match.desiredVehicle.ano,
+            color: match.desiredVehicle.cor,
+            type: match.desiredVehicle.tipo,
+            condition: "-",
+            priceRange: "-",
+          },
+          availableVehicle: {
+            brand: match.availableVehicle.marca,
+            model: match.availableVehicle.modelo,
+            year: match.availableVehicle.ano,
+            color: match.availableVehicle.cor,
+            type: match.availableVehicle.tipo,
+            condition: "-", // idem
+            price: "-", // idem
+          },
+        }));
+
+        setMatches(formatado);
+      } catch (err) {
+        console.error("Erro ao buscar histórico de matches:", err);
+      }
+    };
+
+    fetchMatches();
+  }, []);
+
   return (
     <div className="min-h-screen bg-black bg-car-pattern bg-cover bg-center bg-no-repeat relative">
       <div className="absolute inset-0 bg-black/70"></div>
-      
+
       <div className="relative z-10 container mx-auto px-4 py-8">
         <div className="flex items-center gap-4 mb-8">
           <Link to="/">
@@ -122,7 +64,10 @@ const History = () => {
 
         <div className="grid gap-6">
           {matches.map((match) => (
-            <Card key={match.id} className="bg-black border-white shadow-[0_0_15px_rgba(255,255,255,0.3)]">
+            <Card
+              key={match.id}
+              className="bg-black border-white shadow-[0_0_15px_rgba(255,255,255,0.3)]"
+            >
               <CardHeader>
                 <div className="flex justify-between items-start">
                   <CardTitle className="text-white flex items-center gap-2">
@@ -130,23 +75,32 @@ const History = () => {
                     Match #{match.id} - {match.leadName}
                   </CardTitle>
                   <div className="flex items-center gap-2">
-                    <Badge 
-                      variant={match.status === "Ativo" ? "default" : 
-                              match.status === "Concluído" ? "secondary" : "outline"}
-                      className={match.status === "Ativo" ? "bg-green-600 text-white" :
-                                match.status === "Concluído" ? "bg-blue-600 text-white" :
-                                "bg-yellow-600 text-white"}
+                    <Badge
+                      variant={
+                        match.status === "Ativo"
+                          ? "default"
+                          : match.status === "Concluído"
+                          ? "secondary"
+                          : "outline"
+                      }
+                      className={
+                        match.status === "Ativo"
+                          ? "bg-green-600 text-white"
+                          : match.status === "Concluído"
+                          ? "bg-blue-600 text-white"
+                          : "bg-yellow-600 text-white"
+                      }
                     >
                       {match.status}
                     </Badge>
                     <div className="flex items-center gap-1 text-white/70 text-sm">
                       <Calendar className="h-4 w-4" />
-                      {new Date(match.matchDate).toLocaleDateString('pt-BR')}
+                      {new Date(match.matchDate).toLocaleDateString("pt-BR")}
                     </div>
                   </div>
                 </div>
               </CardHeader>
-              
+
               <CardContent className="space-y-6">
                 {/* Informações do Lead */}
                 <div>
@@ -176,7 +130,10 @@ const History = () => {
                     </h3>
                     <div className="bg-black/50 border border-white/20 rounded-lg p-4 space-y-2">
                       <div className="text-white/80">
-                        <span className="font-medium">{match.desiredVehicle.brand} {match.desiredVehicle.model}</span>
+                        <span className="font-medium">
+                          {match.desiredVehicle.brand}{" "}
+                          {match.desiredVehicle.model}
+                        </span>
                       </div>
                       <div className="grid grid-cols-2 gap-2 text-sm text-white/70">
                         <div>Tipo: {match.desiredVehicle.type}</div>
@@ -198,7 +155,10 @@ const History = () => {
                     </h3>
                     <div className="bg-black/50 border border-white/20 rounded-lg p-4 space-y-2">
                       <div className="text-white/80">
-                        <span className="font-medium">{match.availableVehicle.brand} {match.availableVehicle.model}</span>
+                        <span className="font-medium">
+                          {match.availableVehicle.brand}{" "}
+                          {match.availableVehicle.model}
+                        </span>
                       </div>
                       <div className="grid grid-cols-2 gap-2 text-sm text-white/70">
                         <div>Tipo: {match.availableVehicle.type}</div>
