@@ -10,16 +10,50 @@ const Signup = () => {
   const [lastName, setLastName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    console.log('Signup attempt:', { firstName, lastName, email, password });
-  };
-
+  const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
-  const handleSignup = () => {
-    // Aqui você pode futuramente adicionar a verificação de signup
-    navigate('/form');
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setLoading(true);
+
+    // Combinar nome e sobrenome
+    const nome = `${firstName.trim()} ${lastName.trim()}`.trim();
+
+    try {
+      const response = await fetch("http://localhost:3001/api/auth/register", {
+        method: "POST",
+        headers: { 
+          "Content-Type": "application/json" 
+        },
+        body: JSON.stringify({ 
+          nome, 
+          email: email.trim(), 
+          password 
+        }),
+      });
+
+      const data = await response.json();
+
+      if (response.ok) {
+        alert("Usuário cadastrado com sucesso!");
+        // Opcional: fazer login automático após o cadastro
+        localStorage.setItem("logado", "true");
+        navigate("/form");
+      } else {
+        // Tratar diferentes tipos de erro
+        if (response.status === 409) {
+          alert("Este email já está cadastrado. Tente fazer login.");
+        } else {
+          alert(data.error || "Erro ao cadastrar usuário.");
+        }
+      }
+    } catch (error) {
+      console.error("Erro ao tentar cadastrar:", error);
+      alert("Erro ao conectar com o servidor. Tente novamente.");
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -44,6 +78,7 @@ const Signup = () => {
               value={firstName}
               onChange={(e) => setFirstName(e.target.value)}
               required
+              disabled={loading}
             />
           </div>
 
@@ -54,6 +89,7 @@ const Signup = () => {
               value={lastName}
               onChange={(e) => setLastName(e.target.value)}
               required
+              disabled={loading}
             />
           </div>
 
@@ -64,6 +100,7 @@ const Signup = () => {
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               required
+              disabled={loading}
             />
           </div>
 
@@ -74,11 +111,13 @@ const Signup = () => {
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               required
+              disabled={loading}
+              minLength={6}
             />
           </div>
 
-          <Button type="submit" className="w-full">
-            Cadastrar
+          <Button type="submit" className="w-full" disabled={loading}>
+            {loading ? "Cadastrando..." : "Cadastrar"}
           </Button>
 
           <div className="text-center">

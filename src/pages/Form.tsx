@@ -42,7 +42,7 @@ const Form = () => {
   const [leadEmail, setLeadEmail] = useState("");
   const [leadPhone, setLeadPhone] = useState("");
 
-  // Desired Vehicle
+  // Desired Vehicle - desiredType será definido pelo vehicleType da URL
   const [desiredType, setDesiredType] = useState("");
   const [desiredBrand, setDesiredBrand] = useState("");
   const [brands, setBrands] = useState<{ code: string; name: string }[]>([]);
@@ -60,7 +60,7 @@ const Form = () => {
   const [desiredPriceMax, setDesiredPriceMax] = useState("");
   const [desiredObservations, setDesiredObservations] = useState("");
 
-  // Current Vehicle (Tá na mão)
+  // Current Vehicle - currentType será definido pelo vehicleType da URL
   const [currentType, setCurrentType] = useState("");
   const [currentBrand, setCurrentBrand] = useState("");
   const [brandsCurrent, setBrandsCurrent] = useState<
@@ -242,30 +242,38 @@ const Form = () => {
     }
   }, []);
 
+  // UseEffect para definir o tipo do veículo baseado na URL
+  useEffect(() => {
+    if (vehicleType) {
+      setDesiredType(vehicleType);
+      setCurrentType(vehicleType);
+    }
+  }, [vehicleType]);
+
   // Desired Vehicle useEffects
   useEffect(() => {
-    // Quando o tipo do veículo mudar, limpa os campos dependentes
+    // Quando a marca mudar, limpa os campos dependentes
     setDesiredYear("");
     setDesiredModel("");
     setYears([]);
     setModels([]);
   }, [desiredBrand]);
 
+  // Quando o vehicleType da URL mudar, limpa todos os campos do veículo desejado
   useEffect(() => {
-    // Quando o tipo do veículo mudar, limpa os campos dependentes
     setDesiredBrand("");
     setDesiredYear("");
     setDesiredModel("");
     setYears([]);
     setModels([]);
-  }, [desiredType]);
+  }, [vehicleType]);
 
   // UseEffect para buscar marcas da API (Desired Vehicle)
   useEffect(() => {
     if (!showDesiredVehicle) return; // Only fetch if showing desired vehicle section
 
     const fetchBrands = async () => {
-      const tipoAPI = mapVehicleType(desiredType);
+      const tipoAPI = mapVehicleType(vehicleType || ""); // Usa vehicleType da URL
       if (!tipoAPI) return;
 
       try {
@@ -294,14 +302,14 @@ const Form = () => {
     };
 
     fetchBrands();
-  }, [desiredType, showDesiredVehicle]);
+  }, [vehicleType, showDesiredVehicle]); // Mudou de desiredType para vehicleType
 
   // UseEffect para buscar anos da API (Desired Vehicle)
   useEffect(() => {
     if (!showDesiredVehicle) return; // Only fetch if showing desired vehicle section
 
     const fetchYears = async () => {
-      const tipoAPI = mapVehicleType(desiredType);
+      const tipoAPI = mapVehicleType(vehicleType || ""); // Usa vehicleType da URL
       if (!tipoAPI) return;
 
       try {
@@ -317,13 +325,13 @@ const Form = () => {
     };
 
     fetchYears();
-  }, [desiredType, desiredBrand, showDesiredVehicle]);
+  }, [vehicleType, desiredBrand, showDesiredVehicle]); // Mudou de desiredType para vehicleType
 
   // UseEffect para buscar modelos da API (Desired Vehicle)
   useEffect(() => {
     if (!showDesiredVehicle) return; // Only fetch if showing desired vehicle section
 
-    const tipoAPI = mapVehicleType(desiredType);
+    const tipoAPI = mapVehicleType(vehicleType || ""); // Usa vehicleType da URL
     if (!tipoAPI || !desiredBrand || !desiredYear) return;
 
     const fetchModels = async () => {
@@ -335,32 +343,32 @@ const Form = () => {
     };
 
     fetchModels();
-  }, [desiredType, desiredBrand, desiredYear, showDesiredVehicle]);
+  }, [vehicleType, desiredBrand, desiredYear, showDesiredVehicle]); // Mudou de desiredType para vehicleType
 
   // Current Vehicle useEffects
   useEffect(() => {
-    // Quando o tipo do veículo atual mudar, limpa os campos dependentes
+    // Quando a marca atual mudar, limpa os campos dependentes
     setCurrentYear("");
     setCurrentModel("");
     setYearsCurrent([]);
     setModelsCurrent([]);
   }, [currentBrand]);
 
+  // Quando o vehicleType da URL mudar, limpa todos os campos do veículo atual
   useEffect(() => {
-    // Quando o tipo do veículo atual mudar, limpa os campos dependentes
     setCurrentBrand("");
     setCurrentYear("");
     setCurrentModel("");
     setYearsCurrent([]);
     setModelsCurrent([]);
-  }, [currentType]);
+  }, [vehicleType]);
 
   // UseEffect para buscar marcas do veículo atual
   useEffect(() => {
     if (!showCurrentVehicle) return; // Only fetch if showing current vehicle section
 
     const fetchCurrentBrands = async () => {
-      const tipoAPI = mapVehicleType(currentType);
+      const tipoAPI = mapVehicleType(vehicleType || ""); // Usa vehicleType da URL
       if (!tipoAPI) return;
 
       try {
@@ -376,14 +384,14 @@ const Form = () => {
     };
 
     fetchCurrentBrands();
-  }, [currentType, showCurrentVehicle]);
+  }, [vehicleType, showCurrentVehicle]); // Mudou de currentType para vehicleType
 
   // UseEffect para buscar anos do veículo atual
   useEffect(() => {
     if (!showCurrentVehicle) return; // Only fetch if showing current vehicle section
 
     const fetchCurrentYears = async () => {
-      const tipoAPI = mapVehicleType(currentType);
+      const tipoAPI = mapVehicleType(vehicleType || ""); // Usa vehicleType da URL
       if (!tipoAPI || !currentBrand) return;
 
       try {
@@ -398,13 +406,13 @@ const Form = () => {
       }
     };
     fetchCurrentYears();
-  }, [currentType, currentBrand, showCurrentVehicle]);
+  }, [vehicleType, currentBrand, showCurrentVehicle]); // Mudou de currentType para vehicleType
 
   // UseEffect para buscar modelos do veículo atual
   useEffect(() => {
     if (!showCurrentVehicle) return; // Only fetch if showing current vehicle section
 
-    const tipoAPI = mapVehicleType(currentType);
+    const tipoAPI = mapVehicleType(vehicleType || ""); // Usa vehicleType da URL
     if (!tipoAPI || !currentBrand || !currentYear) return;
 
     const fetchCurrentModels = async () => {
@@ -420,7 +428,7 @@ const Form = () => {
       }
     };
     fetchCurrentModels();
-  }, [currentType, currentBrand, currentYear, showCurrentVehicle]);
+  }, [vehicleType, currentBrand, currentYear, showCurrentVehicle]); // Mudou de currentType para vehicleType
 
   if (!vehicleType || !businessType) {
     return null; // Will redirect via useEffect
@@ -501,15 +509,7 @@ const Form = () => {
                 Veículo Desejado
               </h2>
               <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
-                <Select value={desiredType} onValueChange={setDesiredType}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Tipo do veículo" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="carro">Carro</SelectItem>
-                    <SelectItem value="moto">Moto</SelectItem>
-                  </SelectContent>
-                </Select>
+                {/* Removido o Select de tipo do veículo - será definido pela URL */}
 
                 <Select value={desiredBrand} onValueChange={setDesiredBrand}>
                   <SelectTrigger>
@@ -669,15 +669,7 @@ const Form = () => {
             <div className="bg-black/80 rounded-lg p-6 shadow-outset border border-white">
               <h2 className="text-2xl font-bold text-white mb-6">Tá na Mão</h2>
               <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
-                <Select value={currentType} onValueChange={setCurrentType}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Tipo do veículo" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="carro">Carro</SelectItem>
-                    <SelectItem value="moto">Moto</SelectItem>
-                  </SelectContent>
-                </Select>
+                {/* Removido o Select de tipo do veículo - será definido pela URL */}
 
                 <Select value={currentBrand} onValueChange={setCurrentBrand}>
                   <SelectTrigger>

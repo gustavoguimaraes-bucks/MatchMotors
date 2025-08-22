@@ -8,27 +8,35 @@ import carBackground from '@/assets/car-bg.jpg';
 const Login = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setLoading(true);
 
     try {
-      const res = await fetch("http://localhost:3001/api/login", {
+      const res = await fetch("http://localhost:3001/api/auth/login", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email, password }),
+        body: JSON.stringify({ email: email.trim(), password }),
       });
+
+      const data = await res.json();
 
       if (res.ok) {
         localStorage.setItem("logado", "true");
+        // Opcional: salvar dados do usuário no localStorage
+        localStorage.setItem("userData", JSON.stringify(data.user));
         navigate("/form");
       } else {
-        alert("Credenciais inválidas.");
+        alert(data.error || "Credenciais inválidas.");
       }
     } catch (error) {
       console.error("Erro ao tentar login:", error);
-      alert("Erro ao fazer login.");
+      alert("Erro ao conectar com o servidor. Tente novamente.");
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -54,6 +62,7 @@ const Login = () => {
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               required
+              disabled={loading}
             />
           </div>
 
@@ -64,11 +73,12 @@ const Login = () => {
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               required
+              disabled={loading}
             />
           </div>
 
-          <Button type="submit" className="w-full">
-            Entrar
+          <Button type="submit" className="w-full" disabled={loading}>
+            {loading ? "Entrando..." : "Entrar"}
           </Button>
 
           <div className="text-center">

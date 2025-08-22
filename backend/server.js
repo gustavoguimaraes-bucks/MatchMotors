@@ -1,6 +1,6 @@
 const express = require('express');
 const cors = require('cors');
-const pool = require('./db'); // Importa a conexão com o banco
+const pool = require('./db');
 require('dotenv').config();
 const leadsRoutes = require('./routes/leadsRoutes');
 const fipeRoutes = require('./routes/fipeRoutes')
@@ -15,7 +15,7 @@ app.use('/api/leads', leadsRoutes);
 app.use('/api/fipe', fipeRoutes);
 app.use('/api/match', matchRoutes);
 app.use('/api/matches', matchHistoryRoutes);
-app.use('/api/login', authRoutes)
+app.use('/api/auth', authRoutes);
 
 app.get('/test-db', async (req, res) => {
   try {

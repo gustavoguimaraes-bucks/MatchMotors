@@ -24,11 +24,11 @@ const Index = () => {
               Login
             </Button>
           </Link>
-          {/* <Link to="/signup">
+          <Link to="/signup">
             <Button size="lg" className="px-8">
               Cadastro
             </Button>
-          </Link> */}
+          </Link>
           <Link to="/selection">
             <Button size="lg" className="px-8">
               Formulário
