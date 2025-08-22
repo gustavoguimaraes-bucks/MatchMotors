@@ -6,7 +6,7 @@ exports.salvarMatch = async ({ leadId, matchedLeadId, desired, available }) => {
   const client = await db.connect();
 
   try {
-    // Define os campos específicos para salvar (ajuste conforme sua estrutura do Form)
+    
     const desiredInfo = {
       tipo: desired.desiredType,
       marca: desired.desiredBrand,
@@ -17,7 +17,7 @@ exports.salvarMatch = async ({ leadId, matchedLeadId, desired, available }) => {
     };
 
     const availableInfo = {
-      tipo: available.tipo || "carro", // ou "moto" — adicione isso no back se necessário
+      tipo: available.tipo || "carro",
       marca: available.marca,
       modelo: available.modelo,
       ano: available.ano,

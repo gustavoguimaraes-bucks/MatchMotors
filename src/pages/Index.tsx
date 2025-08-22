@@ -29,7 +29,7 @@ const Index = () => {
               Cadastro
             </Button>
           </Link> */}
-          <Link to="/form">
+          <Link to="/selection">
             <Button size="lg" className="px-8">
               Formulário
             </Button>

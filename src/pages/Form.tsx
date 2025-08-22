@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+import { useSearchParams, useNavigate } from "react-router-dom";
 import { Input } from "@/components/ui/input";
 import {
   Select,
@@ -15,6 +15,28 @@ import logo from "@/assets/logo.png";
 import carBackground from "@/assets/car-bg.jpg";
 
 const Form = () => {
+  const [searchParams] = useSearchParams();
+  const navigate = useNavigate();
+
+  // Get parameters from URL
+  const vehicleType = searchParams.get("vehicleType");
+  const businessType = searchParams.get("businessType");
+  const hasTrade = searchParams.get("hasTrade");
+
+  // Redirect to selection if no parameters
+  useEffect(() => {
+    if (!vehicleType || !businessType) {
+      navigate("/selection");
+    }
+  }, [vehicleType, businessType, navigate]);
+
+  // Determine which sections to show based on the new logic
+  const showLeadInfo = true; // Always show lead info
+  const showDesiredVehicle = businessType === "procura-se"; // Show for "procura-se"
+  const showCurrentVehicle = 
+    businessType === "ta-na-mao" || // Always show for "ta-na-mao"
+    (businessType === "procura-se" && hasTrade === "sim"); // Show for "procura-se" with trade
+
   // Lead Information
   const [leadName, setLeadName] = useState("");
   const [leadEmail, setLeadEmail] = useState("");
@@ -132,9 +154,13 @@ const Form = () => {
 
     const payload = {
       lead: { leadName, leadEmail, leadPhone },
-      desired,
-      current,
+      desired: showDesiredVehicle ? desired : {},
+      current: showCurrentVehicle ? current : {},
     };
+
+    if (!vehicleType || !businessType) {
+      return null;
+    }
 
     try {
       const response = await fetch("http://localhost:3001/api/leads", {
@@ -148,50 +174,54 @@ const Form = () => {
       const result = await response.json();
       console.log("Lead enviado com sucesso:", result);
 
-      
-      try {
-        const matchResponse = await fetch("http://localhost:3001/api/match", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ desired, leadId: result.idLead }),
-        });
-
-        const matchData = await matchResponse.json();
-
-        if (matchData.found) {
-          const carro = matchData.carro;
-          const leadMatch = matchData.lead;
-
-          
-          await fetch("http://localhost:3001/api/matches", {
+      // Only try to match if showing desired vehicle (procura-se scenario)
+      if (showDesiredVehicle) {
+        try {
+          const matchResponse = await fetch("http://localhost:3001/api/match", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
-              leadId: result.idLead,
-              matchedLeadId: carro.lead_id,
-              desired,
-              available: carro,
-            }),
+            body: JSON.stringify({ desired, leadId: result.idLead }),
           });
 
-          const nomeCompleto = await getNomeCompletoDoCarro(
-            carro.tipo || "carro",
-            carro.marca,
-            carro.ano,
-            carro.modelo
-          );
+          const matchData = await matchResponse.json();
 
-          alert(
-            `✅ MATCH ENCONTRADO!\n\n🚗 Veículo: ${nomeCompleto}\n👤 Dono: ${leadMatch.nome} (${leadMatch.telefone})`
-          );
-        } else {
-          alert(
-            "Lead cadastrado com sucesso! Nenhum match encontrado no momento."
-          );
+          if (matchData.found) {
+            const carro = matchData.carro;
+            const leadMatch = matchData.lead;
+
+            await fetch("http://localhost:3001/api/matches", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({
+                leadId: result.idLead,
+                matchedLeadId: carro.lead_id,
+                desired,
+                available: carro,
+              }),
+            });
+
+            const nomeCompleto = await getNomeCompletoDoCarro(
+              carro.tipo || "carro",
+              carro.marca,
+              carro.ano,
+              carro.modelo
+            );
+
+            alert(
+              `✅ MATCH ENCONTRADO!\n\n🚗 Veículo: ${nomeCompleto}\n👤 Dono: ${leadMatch.nome} (${leadMatch.telefone})`
+            );
+          } else {
+            alert(
+              "Lead cadastrado com sucesso! Nenhum match encontrado no momento."
+            );
+          }
+        } catch (error) {
+          console.error("Erro ao buscar match:", error);
+          alert("Lead cadastrado, mas houve erro ao buscar match.");
         }
-      } catch (error) {
-        console.error("Erro ao buscar match:", error);
-        alert("Lead cadastrado, mas houve erro ao buscar match.");
+      } else {
+        // For "ta-na-mao" without search
+        alert("Lead cadastrado com sucesso!");
       }
     } catch (error) {
       console.error("Erro ao enviar dados:", error);
@@ -205,15 +235,14 @@ const Form = () => {
     return "";
   };
 
-  const navigate = useNavigate();
-
   useEffect(() => {
-  const logado = localStorage.getItem("logado");
-  if (logado !== "true") {
-    navigate("/login");
-  }
-}, []);
+    const logado = localStorage.getItem("logado");
+    if (logado !== "true") {
+      navigate("/login");
+    }
+  }, []);
 
+  // Desired Vehicle useEffects
   useEffect(() => {
     // Quando o tipo do veículo mudar, limpa os campos dependentes
     setDesiredYear("");
@@ -231,8 +260,10 @@ const Form = () => {
     setModels([]);
   }, [desiredType]);
 
-  // UseEffect para buscar marcas da API
+  // UseEffect para buscar marcas da API (Desired Vehicle)
   useEffect(() => {
+    if (!showDesiredVehicle) return; // Only fetch if showing desired vehicle section
+
     const fetchBrands = async () => {
       const tipoAPI = mapVehicleType(desiredType);
       if (!tipoAPI) return;
@@ -263,10 +294,12 @@ const Form = () => {
     };
 
     fetchBrands();
-  }, [desiredType]);
+  }, [desiredType, showDesiredVehicle]);
 
-  // UseEffect para buscar anos da API
+  // UseEffect para buscar anos da API (Desired Vehicle)
   useEffect(() => {
+    if (!showDesiredVehicle) return; // Only fetch if showing desired vehicle section
+
     const fetchYears = async () => {
       const tipoAPI = mapVehicleType(desiredType);
       if (!tipoAPI) return;
@@ -284,10 +317,12 @@ const Form = () => {
     };
 
     fetchYears();
-  }, [desiredType, desiredBrand]);
+  }, [desiredType, desiredBrand, showDesiredVehicle]);
 
-  // UseEffect para buscar modelos da API
+  // UseEffect para buscar modelos da API (Desired Vehicle)
   useEffect(() => {
+    if (!showDesiredVehicle) return; // Only fetch if showing desired vehicle section
+
     const tipoAPI = mapVehicleType(desiredType);
     if (!tipoAPI || !desiredBrand || !desiredYear) return;
 
@@ -300,10 +335,30 @@ const Form = () => {
     };
 
     fetchModels();
-  }, [desiredType, desiredBrand, desiredYear]);
+  }, [desiredType, desiredBrand, desiredYear, showDesiredVehicle]);
+
+  // Current Vehicle useEffects
+  useEffect(() => {
+    // Quando o tipo do veículo atual mudar, limpa os campos dependentes
+    setCurrentYear("");
+    setCurrentModel("");
+    setYearsCurrent([]);
+    setModelsCurrent([]);
+  }, [currentBrand]);
+
+  useEffect(() => {
+    // Quando o tipo do veículo atual mudar, limpa os campos dependentes
+    setCurrentBrand("");
+    setCurrentYear("");
+    setCurrentModel("");
+    setYearsCurrent([]);
+    setModelsCurrent([]);
+  }, [currentType]);
 
   // UseEffect para buscar marcas do veículo atual
   useEffect(() => {
+    if (!showCurrentVehicle) return; // Only fetch if showing current vehicle section
+
     const fetchCurrentBrands = async () => {
       const tipoAPI = mapVehicleType(currentType);
       if (!tipoAPI) return;
@@ -321,10 +376,12 @@ const Form = () => {
     };
 
     fetchCurrentBrands();
-  }, [currentType]);
+  }, [currentType, showCurrentVehicle]);
 
   // UseEffect para buscar anos do veículo atual
   useEffect(() => {
+    if (!showCurrentVehicle) return; // Only fetch if showing current vehicle section
+
     const fetchCurrentYears = async () => {
       const tipoAPI = mapVehicleType(currentType);
       if (!tipoAPI || !currentBrand) return;
@@ -341,10 +398,12 @@ const Form = () => {
       }
     };
     fetchCurrentYears();
-  }, [currentType, currentBrand]);
+  }, [currentType, currentBrand, showCurrentVehicle]);
 
   // UseEffect para buscar modelos do veículo atual
   useEffect(() => {
+    if (!showCurrentVehicle) return; // Only fetch if showing current vehicle section
+
     const tipoAPI = mapVehicleType(currentType);
     if (!tipoAPI || !currentBrand || !currentYear) return;
 
@@ -361,7 +420,11 @@ const Form = () => {
       }
     };
     fetchCurrentModels();
-  }, [currentType, currentBrand, currentYear]);
+  }, [currentType, currentBrand, currentYear, showCurrentVehicle]);
+
+  if (!vehicleType || !businessType) {
+    return null; // Will redirect via useEffect
+  }
 
   return (
     <div
@@ -382,358 +445,378 @@ const Form = () => {
       </div>
 
       <div className="relative z-10 container mx-auto p-8">
+        <div className="max-w-4xl mx-auto mb-6">
+          <Button
+            onClick={() => navigate("/selection")}
+            variant="outline"
+            className="mb-4"
+          >
+            ← Voltar para seleção
+          </Button>
+          <h1 className="text-3xl font-bold text-white text-center">
+            Formulário - {vehicleType === "carro" ? "Carro" : "Moto"}
+          </h1>
+          <p className="text-center text-gray-300 mt-2">
+            {businessType === "procura-se" ? "Procura-se" : "Tá na mão"}
+            {hasTrade &&
+              businessType === "procura-se" &&
+              ` • ${hasTrade === "sim" ? "Com troca" : "Sem troca"}`}
+          </p>
+        </div>
+
         <form onSubmit={handleSubmit} className="max-w-4xl mx-auto space-y-12">
-          {/* Lead Information Section */}
-          <div className="bg-black/80 rounded-lg p-6 shadow-outset border border-white">
-            <h2
-              className="text-2xl font-bold text-white mb-6"
-              style={{ fontFamily: "Arial, sans-serif" }}
-            >
-              Informações do Lead
-            </h2>
-            <div className="grid md:grid-cols-3 gap-4">
-              <Input
-                placeholder="Nome"
-                value={leadName}
-                onChange={(e) => setLeadName(e.target.value)}
-                required
-              />
-              <Input
-                type="email"
-                placeholder="Email"
-                value={leadEmail}
-                onChange={(e) => setLeadEmail(e.target.value)}
-                required
-              />
-              <Input
-                type="tel"
-                placeholder="Telefone"
-                value={leadPhone}
-                onChange={(e) => setLeadPhone(e.target.value)}
-                required
-              />
-            </div>
-          </div>
-
-          {/* Desired Vehicle Section */}
-          <div className="bg-black/80 rounded-lg p-6 shadow-outset border border-white">
-            <h2 className="text-2xl font-bold text-white mb-6">
-              Veículo Desejado
-            </h2>
-            <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
-              <Select value={desiredType} onValueChange={setDesiredType}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Tipo do veículo" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="carro">Carro</SelectItem>
-                  <SelectItem value="moto">Moto</SelectItem>
-                </SelectContent>
-              </Select>
-
-              <Select value={desiredBrand} onValueChange={setDesiredBrand}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Marca" />
-                </SelectTrigger>
-                <SelectContent>
-                  {brands.map((brand) => (
-                    <SelectItem key={brand.code} value={brand.code}>
-                      {brand.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-
-              <Select value={desiredYear} onValueChange={setDesiredYear}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Ano" />
-                </SelectTrigger>
-                <SelectContent>
-                  {years.map((y) => (
-                    <SelectItem key={y.code} value={y.code}>
-                      {y.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-
-              <Select value={desiredModel} onValueChange={setDesiredModel}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Modelo" />
-                </SelectTrigger>
-                <SelectContent>
-                  {models.map((m) => (
-                    <SelectItem key={m.code} value={m.code}>
-                      {m.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-
-              <Select value={desiredColor} onValueChange={setDesiredColor}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Cor" />
-                </SelectTrigger>
-                <SelectContent>
-                  {/* Cada SelectItem representa uma cor disponível para o veículo */}
-                  <SelectItem value="qualquer">Qualquer cor</SelectItem>
-                  <SelectItem value="amarelo">Amarelo</SelectItem>
-                  <SelectItem value="azul">Azul</SelectItem>
-                  <SelectItem value="bege">Bege</SelectItem>
-                  <SelectItem value="branco">Branco</SelectItem>
-                  <SelectItem value="bronze">Bronze</SelectItem>
-                  <SelectItem value="cinza">Cinza</SelectItem>
-                  <SelectItem value="dourado">Dourado</SelectItem>
-                  <SelectItem value="indefinida">Indefinida</SelectItem>
-                  <SelectItem value="laranja">Laranja</SelectItem>
-                  <SelectItem value="marrom">Marrom</SelectItem>
-                  <SelectItem value="prata">Prata</SelectItem>
-                  <SelectItem value="preto">Preto</SelectItem>
-                  <SelectItem value="rosa">Rosa</SelectItem>
-                  <SelectItem value="roxo">Roxo</SelectItem>
-                  <SelectItem value="verde">Verde</SelectItem>
-                  <SelectItem value="vermelho">Vermelho</SelectItem>
-                  <SelectItem value="vinho">Vinho</SelectItem>
-                </SelectContent>
-              </Select>
-
-              <Select
-                value={desiredCarroceria}
-                onValueChange={setdesiredCarroceria}
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="Carroceria" />
-                </SelectTrigger>
-                <SelectContent>
-                  {/* Cada SelectItem representa um tipo de carroceria disponível */}
-                  <SelectItem value="buggy">Buggy</SelectItem>
-                  <SelectItem value="conversivel">Conversível</SelectItem>
-                  <SelectItem value="cupe">Cupê</SelectItem>
-                  <SelectItem value="hatch">Hatch</SelectItem>
-                  <SelectItem value="minivan">Minivan</SelectItem>
-                  <SelectItem value="perua">Perua/SW</SelectItem>
-                  <SelectItem value="picape">Picape</SelectItem>
-                  <SelectItem value="sedan">Sedã</SelectItem>
-                  <SelectItem value="suv">SUV</SelectItem>
-                  <SelectItem value="van">Van/Utilitário/Furgão</SelectItem>
-                </SelectContent>
-              </Select>
-
-              <Select
-                value={desiredCondition}
-                onValueChange={setDesiredCondition}
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="Novo ou Usado" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="novo">Novo</SelectItem>
-                  <SelectItem value="usado">Usado</SelectItem>
-                </SelectContent>
-              </Select>
-
-              <Select
-                value={desiredBlindagem}
-                onValueChange={setdesiredBlindagem}
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="Blindagem" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="sim">Sim</SelectItem>
-                  <SelectItem value="nao">Não</SelectItem>
-                  <SelectItem value="indiferente">Indiferente</SelectItem>
-                </SelectContent>
-              </Select>
-
-              <div className="lg:col-span-2 grid grid-cols-2 gap-2">
+          {/* Lead Information Section - Always show */}
+          {showLeadInfo && (
+            <div className="bg-black/80 rounded-lg p-6 shadow-outset border border-white">
+              <h2 className="text-2xl font-bold text-white mb-6">Informações do Lead</h2>
+              <div className="grid md:grid-cols-3 gap-4">
                 <Input
-                  placeholder="KM mínima desejada"
-                  value={desiredKmMin}
-                  onChange={(e) => setDesiredKmMin(e.target.value)}
+                  placeholder="Nome"
+                  value={leadName}
+                  onChange={(e) => setLeadName(e.target.value)}
+                  required
                 />
                 <Input
-                  placeholder="KM máxima desejada"
-                  value={desiredKmMax}
-                  onChange={(e) => setDesiredKmMax(e.target.value)}
-                />
-              </div>
-
-              <div className="lg:col-span-2 grid grid-cols-2 gap-2">
-                <Input
-                  placeholder="Preço mínimo"
-                  value={desiredPriceMin}
-                  onChange={(e) => setDesiredPriceMin(e.target.value)}
+                  type="email"
+                  placeholder="Email"
+                  value={leadEmail}
+                  onChange={(e) => setLeadEmail(e.target.value)}
+                  required
                 />
                 <Input
-                  placeholder="Preço máximo"
-                  value={desiredPriceMax}
-                  onChange={(e) => setDesiredPriceMax(e.target.value)}
-                />
-              </div>
-
-              <div className="lg:col-span-3">
-                <Textarea
-                  placeholder="Observações"
-                  value={desiredObservations}
-                  onChange={(e) => setDesiredObservations(e.target.value)}
-                  rows={3}
+                  type="tel"
+                  placeholder="Telefone"
+                  value={leadPhone}
+                  onChange={(e) => setLeadPhone(e.target.value)}
+                  required
                 />
               </div>
             </div>
-          </div>
+          )}
 
-          {/* Current Vehicle Section */}
-          <div className="bg-black/80 rounded-lg p-6 shadow-outset border border-white">
-            <h2 className="text-2xl font-bold text-white mb-6">Tá na Mão</h2>
-            <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
-              <Select value={currentType} onValueChange={setCurrentType}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Tipo do veículo" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="carro">Carro</SelectItem>
-                  <SelectItem value="moto">Moto</SelectItem>
-                </SelectContent>
-              </Select>
+          {/* Desired Vehicle Section - Show only for "procura-se" */}
+          {showDesiredVehicle && (
+            <div className="bg-black/80 rounded-lg p-6 shadow-outset border border-white">
+              <h2 className="text-2xl font-bold text-white mb-6">
+                Veículo Desejado
+              </h2>
+              <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
+                <Select value={desiredType} onValueChange={setDesiredType}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Tipo do veículo" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="carro">Carro</SelectItem>
+                    <SelectItem value="moto">Moto</SelectItem>
+                  </SelectContent>
+                </Select>
 
-              <Select value={currentBrand} onValueChange={setCurrentBrand}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Marca" />
-                </SelectTrigger>
-                <SelectContent>
-                  {brandsCurrent.map((brand) => (
-                    <SelectItem key={brand.code} value={brand.code}>
-                      {brand.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+                <Select value={desiredBrand} onValueChange={setDesiredBrand}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Marca" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {brands.map((brand) => (
+                      <SelectItem key={brand.code} value={brand.code}>
+                        {brand.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
 
-              <Select value={currentYear} onValueChange={setCurrentYear}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Ano" />
-                </SelectTrigger>
-                <SelectContent>
-                  {yearsCurrent.map((year) => (
-                    <SelectItem key={year.code} value={year.code}>
-                      {year.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+                <Select value={desiredYear} onValueChange={setDesiredYear}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Ano" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {years.map((y) => (
+                      <SelectItem key={y.code} value={y.code}>
+                        {y.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
 
-              <Select value={currentModel} onValueChange={setCurrentModel}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Modelo" />
-                </SelectTrigger>
-                <SelectContent>
-                  {modelsCurrent.map((model) => (
-                    <SelectItem key={model.code} value={model.code}>
-                      {model.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+                <Select value={desiredModel} onValueChange={setDesiredModel}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Modelo" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {models.map((m) => (
+                      <SelectItem key={m.code} value={m.code}>
+                        {m.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
 
-              <Select value={currentColor} onValueChange={setCurrentColor}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Cor" />
-                </SelectTrigger>
-                <SelectContent>
-                  {/* Cada SelectItem representa uma cor disponível para o veículo */}
-                  <SelectItem value="qualquer">Qualquer cor</SelectItem>
-                  <SelectItem value="amarelo">Amarelo</SelectItem>
-                  <SelectItem value="azul">Azul</SelectItem>
-                  <SelectItem value="bege">Bege</SelectItem>
-                  <SelectItem value="branco">Branco</SelectItem>
-                  <SelectItem value="bronze">Bronze</SelectItem>
-                  <SelectItem value="cinza">Cinza</SelectItem>
-                  <SelectItem value="dourado">Dourado</SelectItem>
-                  <SelectItem value="indefinida">Indefinida</SelectItem>
-                  <SelectItem value="laranja">Laranja</SelectItem>
-                  <SelectItem value="marrom">Marrom</SelectItem>
-                  <SelectItem value="prata">Prata</SelectItem>
-                  <SelectItem value="preto">Preto</SelectItem>
-                  <SelectItem value="rosa">Rosa</SelectItem>
-                  <SelectItem value="roxo">Roxo</SelectItem>
-                  <SelectItem value="verde">Verde</SelectItem>
-                  <SelectItem value="vermelho">Vermelho</SelectItem>
-                  <SelectItem value="vinho">Vinho</SelectItem>
-                </SelectContent>
-              </Select>
+                <Select value={desiredColor} onValueChange={setDesiredColor}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Cor" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {/* Cada SelectItem representa uma cor disponível para o veículo */}
+                    <SelectItem value="qualquer">Qualquer cor</SelectItem>
+                    <SelectItem value="amarelo">Amarelo</SelectItem>
+                    <SelectItem value="azul">Azul</SelectItem>
+                    <SelectItem value="bege">Bege</SelectItem>
+                    <SelectItem value="branco">Branco</SelectItem>
+                    <SelectItem value="bronze">Bronze</SelectItem>
+                    <SelectItem value="cinza">Cinza</SelectItem>
+                    <SelectItem value="dourado">Dourado</SelectItem>
+                    <SelectItem value="indefinida">Indefinida</SelectItem>
+                    <SelectItem value="laranja">Laranja</SelectItem>
+                    <SelectItem value="marrom">Marrom</SelectItem>
+                    <SelectItem value="prata">Prata</SelectItem>
+                    <SelectItem value="preto">Preto</SelectItem>
+                    <SelectItem value="rosa">Rosa</SelectItem>
+                    <SelectItem value="roxo">Roxo</SelectItem>
+                    <SelectItem value="verde">Verde</SelectItem>
+                    <SelectItem value="vermelho">Vermelho</SelectItem>
+                    <SelectItem value="vinho">Vinho</SelectItem>
+                  </SelectContent>
+                </Select>
 
-              <Select
-                value={currentCarroceria}
-                onValueChange={setcurrentCarroceria}
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="Carroceria" />
-                </SelectTrigger>
-                <SelectContent>
-                  {/* Cada SelectItem representa um tipo de carroceria disponível */}
-                  <SelectItem value="buggy">Buggy</SelectItem>
-                  <SelectItem value="conversivel">Conversível</SelectItem>
-                  <SelectItem value="cupe">Cupê</SelectItem>
-                  <SelectItem value="hatch">Hatch</SelectItem>
-                  <SelectItem value="minivan">Minivan</SelectItem>
-                  <SelectItem value="perua">Perua/SW</SelectItem>
-                  <SelectItem value="picape">Picape</SelectItem>
-                  <SelectItem value="sedan">Sedã</SelectItem>
-                  <SelectItem value="suv">SUV</SelectItem>
-                  <SelectItem value="van">Van/Utilitário/Furgão</SelectItem>
-                </SelectContent>
-              </Select>
+                <Select
+                  value={desiredCarroceria}
+                  onValueChange={setdesiredCarroceria}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Carroceria" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {/* Cada SelectItem representa um tipo de carroceria disponível */}
+                    <SelectItem value="buggy">Buggy</SelectItem>
+                    <SelectItem value="conversivel">Conversível</SelectItem>
+                    <SelectItem value="cupe">Cupê</SelectItem>
+                    <SelectItem value="hatch">Hatch</SelectItem>
+                    <SelectItem value="minivan">Minivan</SelectItem>
+                    <SelectItem value="perua">Perua/SW</SelectItem>
+                    <SelectItem value="picape">Picape</SelectItem>
+                    <SelectItem value="sedan">Sedã</SelectItem>
+                    <SelectItem value="suv">SUV</SelectItem>
+                    <SelectItem value="van">Van/Utilitário/Furgão</SelectItem>
+                  </SelectContent>
+                </Select>
 
-              <Select
-                value={currentCondition}
-                onValueChange={setCurrentCondition}
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="Novo ou Usado" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="novo">Novo</SelectItem>
-                  <SelectItem value="usado">Usado</SelectItem>
-                </SelectContent>
-              </Select>
+                <Select
+                  value={desiredCondition}
+                  onValueChange={setDesiredCondition}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Novo ou Usado" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="novo">Novo</SelectItem>
+                    <SelectItem value="usado">Usado</SelectItem>
+                  </SelectContent>
+                </Select>
 
-              <Select
-                value={currentBlindagem}
-                onValueChange={setcurrentBlindagem}
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="Blindagem" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="sim">Sim</SelectItem>
-                  <SelectItem value="nao">Não</SelectItem>
-                  <SelectItem value="indiferente">Indiferente</SelectItem>
-                </SelectContent>
-              </Select>
+                <Select
+                  value={desiredBlindagem}
+                  onValueChange={setdesiredBlindagem}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Blindagem" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="sim">Sim</SelectItem>
+                    <SelectItem value="nao">Não</SelectItem>
+                    <SelectItem value="indiferente">Indiferente</SelectItem>
+                  </SelectContent>
+                </Select>
 
-              <Input
-                placeholder="Kilometragem"
-                value={currentKm}
-                onChange={(e) => setCurrentKm(e.target.value)}
-              />
+                <div className="lg:col-span-2 grid grid-cols-2 gap-2">
+                  <Input
+                    placeholder="KM mínima desejada"
+                    value={desiredKmMin}
+                    onChange={(e) => setDesiredKmMin(e.target.value)}
+                  />
+                  <Input
+                    placeholder="KM máxima desejada"
+                    value={desiredKmMax}
+                    onChange={(e) => setDesiredKmMax(e.target.value)}
+                  />
+                </div>
 
-              <Input
-                placeholder="Preço"
-                value={currentPrice}
-                onChange={(e) => setCurrentPrice(e.target.value)}
-              />
+                <div className="lg:col-span-2 grid grid-cols-2 gap-2">
+                  <Input
+                    placeholder="Preço mínimo"
+                    value={desiredPriceMin}
+                    onChange={(e) => setDesiredPriceMin(e.target.value)}
+                  />
+                  <Input
+                    placeholder="Preço máximo"
+                    value={desiredPriceMax}
+                    onChange={(e) => setDesiredPriceMax(e.target.value)}
+                  />
+                </div>
 
-              <div className="lg:col-span-3">
-                <Textarea
-                  placeholder="Observações"
-                  value={currentObservations}
-                  onChange={(e) => setCurrentObservations(e.target.value)}
-                  rows={3}
-                />
+                <div className="lg:col-span-3">
+                  <Textarea
+                    placeholder="Observações"
+                    value={desiredObservations}
+                    onChange={(e) => setDesiredObservations(e.target.value)}
+                    rows={3}
+                  />
+                </div>
               </div>
             </div>
-          </div>
+          )}
+
+          {/* Current Vehicle Section - Show for "ta-na-mao" or "procura-se" with trade */}
+          {showCurrentVehicle && (
+            <div className="bg-black/80 rounded-lg p-6 shadow-outset border border-white">
+              <h2 className="text-2xl font-bold text-white mb-6">Tá na Mão</h2>
+              <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
+                <Select value={currentType} onValueChange={setCurrentType}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Tipo do veículo" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="carro">Carro</SelectItem>
+                    <SelectItem value="moto">Moto</SelectItem>
+                  </SelectContent>
+                </Select>
+
+                <Select value={currentBrand} onValueChange={setCurrentBrand}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Marca" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {brandsCurrent.map((brand) => (
+                      <SelectItem key={brand.code} value={brand.code}>
+                        {brand.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+
+                <Select value={currentYear} onValueChange={setCurrentYear}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Ano" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {yearsCurrent.map((year) => (
+                      <SelectItem key={year.code} value={year.code}>
+                        {year.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+
+                <Select value={currentModel} onValueChange={setCurrentModel}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Modelo" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {modelsCurrent.map((model) => (
+                      <SelectItem key={model.code} value={model.code}>
+                        {model.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+
+                <Select value={currentColor} onValueChange={setCurrentColor}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Cor" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {/* Cada SelectItem representa uma cor disponível para o veículo */}
+                    <SelectItem value="qualquer">Qualquer cor</SelectItem>
+                    <SelectItem value="amarelo">Amarelo</SelectItem>
+                    <SelectItem value="azul">Azul</SelectItem>
+                    <SelectItem value="bege">Bege</SelectItem>
+                    <SelectItem value="branco">Branco</SelectItem>
+                    <SelectItem value="bronze">Bronze</SelectItem>
+                    <SelectItem value="cinza">Cinza</SelectItem>
+                    <SelectItem value="dourado">Dourado</SelectItem>
+                    <SelectItem value="indefinida">Indefinida</SelectItem>
+                    <SelectItem value="laranja">Laranja</SelectItem>
+                    <SelectItem value="marrom">Marrom</SelectItem>
+                    <SelectItem value="prata">Prata</SelectItem>
+                    <SelectItem value="preto">Preto</SelectItem>
+                    <SelectItem value="rosa">Rosa</SelectItem>
+                    <SelectItem value="roxo">Roxo</SelectItem>
+                    <SelectItem value="verde">Verde</SelectItem>
+                    <SelectItem value="vermelho">Vermelho</SelectItem>
+                    <SelectItem value="vinho">Vinho</SelectItem>
+                  </SelectContent>
+                </Select>
+
+                <Select
+                  value={currentCarroceria}
+                  onValueChange={setcurrentCarroceria}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Carroceria" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {/* Cada SelectItem representa um tipo de carroceria disponível */}
+                    <SelectItem value="buggy">Buggy</SelectItem>
+                    <SelectItem value="conversivel">Conversível</SelectItem>
+                    <SelectItem value="cupe">Cupê</SelectItem>
+                    <SelectItem value="hatch">Hatch</SelectItem>
+                    <SelectItem value="minivan">Minivan</SelectItem>
+                    <SelectItem value="perua">Perua/SW</SelectItem>
+                    <SelectItem value="picape">Picape</SelectItem>
+                    <SelectItem value="sedan">Sedã</SelectItem>
+                    <SelectItem value="suv">SUV</SelectItem>
+                    <SelectItem value="van">Van/Utilitário/Furgão</SelectItem>
+                  </SelectContent>
+                </Select>
+
+                <Select
+                  value={currentCondition}
+                  onValueChange={setCurrentCondition}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Novo ou Usado" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="novo">Novo</SelectItem>
+                    <SelectItem value="usado">Usado</SelectItem>
+                  </SelectContent>
+                </Select>
+
+                <Select
+                  value={currentBlindagem}
+                  onValueChange={setcurrentBlindagem}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Blindagem" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="sim">Sim</SelectItem>
+                    <SelectItem value="nao">Não</SelectItem>
+                    <SelectItem value="indiferente">Indiferente</SelectItem>
+                  </SelectContent>
+                </Select>
+
+                <Input
+                  placeholder="Kilometragem"
+                  value={currentKm}
+                  onChange={(e) => setCurrentKm(e.target.value)}
+                />
+
+                <Input
+                  placeholder="Preço"
+                  value={currentPrice}
+                  onChange={(e) => setCurrentPrice(e.target.value)}
+                />
+
+                <div className="lg:col-span-3">
+                  <Textarea
+                    placeholder="Observações"
+                    value={currentObservations}
+                    onChange={(e) => setCurrentObservations(e.target.value)}
+                    rows={3}
+                  />
+                </div>
+              </div>
+            </div>
+          )}
 
           <div className="flex justify-center">
             <Button onClick={handleSubmit} type="submit" className="px-12">
