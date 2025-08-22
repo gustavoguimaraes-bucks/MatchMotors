@@ -4,6 +4,7 @@ import { Badge } from "@/components/ui/badge";
 import { ArrowLeft, Car, User, Calendar, Phone, Mail } from "lucide-react";
 import { Link } from "react-router-dom";
 import { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
 
 const History = () => {
   const [matches, setMatches] = useState([]);
@@ -44,6 +45,15 @@ const History = () => {
     };
 
     fetchMatches();
+  }, []);
+
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    const logado = localStorage.getItem("logado");
+    if (logado !== "true") {
+      navigate("/login");
+    }
   }, []);
 
   return (

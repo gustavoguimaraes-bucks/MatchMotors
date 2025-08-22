@@ -8,17 +8,29 @@ import carBackground from '@/assets/car-bg.jpg';
 const Login = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    console.log('Login attempt:', { email, password });
-  };
-
   const navigate = useNavigate();
-  const handleLogin = () => {
-  // Aqui você pode futuramente adicionar a verificação de login
-  navigate('/form');
-};
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+
+    try {
+      const res = await fetch("http://localhost:3001/api/login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email, password }),
+      });
+
+      if (res.ok) {
+        localStorage.setItem("logado", "true");
+        navigate("/form");
+      } else {
+        alert("Credenciais inválidas.");
+      }
+    } catch (error) {
+      console.error("Erro ao tentar login:", error);
+      alert("Erro ao fazer login.");
+    }
+  };
 
   return (
     <div 
@@ -55,7 +67,7 @@ const Login = () => {
             />
           </div>
 
-          <Button onClick={handleLogin} type="submit" className="w-full">
+          <Button type="submit" className="w-full">
             Entrar
           </Button>
 

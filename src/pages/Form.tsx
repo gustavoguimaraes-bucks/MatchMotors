@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import { useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import { Input } from "@/components/ui/input";
 import {
   Select,
@@ -147,7 +148,7 @@ const Form = () => {
       const result = await response.json();
       console.log("Lead enviado com sucesso:", result);
 
-      // 🔍 Após cadastrar o lead, buscar match
+      
       try {
         const matchResponse = await fetch("http://localhost:3001/api/match", {
           method: "POST",
@@ -203,6 +204,15 @@ const Form = () => {
     if (tipo === "moto") return "motorcycles";
     return "";
   };
+
+  const navigate = useNavigate();
+
+  useEffect(() => {
+  const logado = localStorage.getItem("logado");
+  if (logado !== "true") {
+    navigate("/login");
+  }
+}, []);
 
   useEffect(() => {
     // Quando o tipo do veículo mudar, limpa os campos dependentes
