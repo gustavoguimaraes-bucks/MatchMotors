@@ -9,8 +9,16 @@ const matchHistoryRoutes = require('./routes/matchHistoryRoutes');
 const authRoutes = require('./routes/authRoutes');
 
 const app = express();
-app.use(cors());
+
+// CORS configurado para aceitar requisições de qualquer origem
+app.use(cors({
+  origin: true, // Aceita qualquer origem (para desenvolvimento)
+  credentials: true
+}));
+
 app.use(express.json());
+
+// Rotas da API
 app.use('/api/leads', leadsRoutes);
 app.use('/api/fipe', fipeRoutes);
 app.use('/api/match', matchRoutes);

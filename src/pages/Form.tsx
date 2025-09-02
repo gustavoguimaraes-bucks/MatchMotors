@@ -33,7 +33,7 @@ const Form = () => {
   // Determine which sections to show based on the new logic
   const showLeadInfo = true; // Always show lead info
   const showDesiredVehicle = businessType === "procura-se"; // Show for "procura-se"
-  const showCurrentVehicle = 
+  const showCurrentVehicle =
     businessType === "ta-na-mao" || // Always show for "ta-na-mao"
     (businessType === "procura-se" && hasTrade === "sim"); // Show for "procura-se" with trade
 
@@ -119,6 +119,8 @@ const Form = () => {
     return `${nomeMarca} ${nomeModelo} ${nomeAno}`;
   };
 
+  // Função handleSubmit atualizada para o Form.tsx
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
@@ -184,40 +186,91 @@ const Form = () => {
           });
 
           const matchData = await matchResponse.json();
+          console.log("Resposta do match:", matchData);
 
           if (matchData.found) {
             const carro = matchData.carro;
-            const leadMatch = matchData.lead;
 
+            // Salva o match no histórico
             await fetch("http://localhost:3001/api/matches", {
               method: "POST",
               headers: { "Content-Type": "application/json" },
               body: JSON.stringify({
                 leadId: result.idLead,
-                matchedLeadId: carro.lead_id,
+                matchedLeadId:
+                  matchData.source === "troca" ? carro.lead_id : null,
                 desired,
                 available: carro,
+                source: matchData.source,
               }),
             });
 
-            const nomeCompleto = await getNomeCompletoDoCarro(
-              carro.tipo || "carro",
-              carro.marca,
-              carro.ano,
-              carro.modelo
-            );
+            // Tratamento diferenciado baseado na fonte do match
+            if (matchData.source === "estoque") {
+              // Match encontrado no estoque KKA
+              const matchType =
+                carro.match_type === "flexible" ? " (busca flexível)" : "";
+              const precoFormatado = carro.preco
+                ? new Intl.NumberFormat("pt-BR", {
+                    style: "currency",
+                    currency: "BRL",
+                  }).format(carro.preco)
+                : "Consultar";
 
-            alert(
-              `✅ MATCH ENCONTRADO!\n\n🚗 Veículo: ${nomeCompleto}\n👤 Dono: ${leadMatch.nome} (${leadMatch.telefone})`
-            );
+              alert(
+                `🎯 MATCH ENCONTRADO NO ESTOQUE KKA!${matchType}
+
+🚗 Veículo: ${carro.marca} ${carro.modelo_nome}
+📅 Ano Fabricação: ${carro.anofabricacao}
+📅 Ano Modelo: ${carro.anomodelo}
+🎨 Cor: ${carro.cor}
+🚘 Carroceria: ${carro.carroceria}
+⛽ Combustível: ${carro.combustivel}
+🔧 Câmbio: ${carro.cambio}
+💰 Preço: ${precoFormatado}
+🏷️ Placa: ${carro.placa_completa}
+
+📍 Fonte: Estoque KKA
+🟢 Status: Disponível`
+              );
+            } else if (matchData.source === "troca") {
+              // Match encontrado em carros de troca
+              const leadMatch = matchData.lead;
+
+              const nomeCompleto = await getNomeCompletoDoCarro(
+                carro.tipo || "carro",
+                carro.marca,
+                carro.ano,
+                carro.modelo
+              );
+
+              alert(
+                `🔄 MATCH ENCONTRADO PARA TROCA!
+
+🚗 Veículo: ${nomeCompleto}
+👤 Proprietário: ${leadMatch.nome}
+📞 Contato: ${leadMatch.telefone}
+✉️ Email: ${leadMatch.email}
+
+💱 Modalidade: Troca entre leads`
+              );
+            }
           } else {
             alert(
-              "Lead cadastrado com sucesso! Nenhum match encontrado no momento."
+              `Lead cadastrado com sucesso! 
+
+❌ Nenhum match encontrado no momento.
+
+Fontes consultadas:
+✓ Estoque KKA da concessionária  
+✓ Carros disponíveis para troca`
             );
           }
         } catch (error) {
           console.error("Erro ao buscar match:", error);
-          alert("Lead cadastrado, mas houve erro ao buscar match.");
+          alert(
+            "Lead cadastrado com sucesso, mas houve erro ao buscar match. Verifique os logs do servidor."
+          );
         }
       } else {
         // For "ta-na-mao" without search
@@ -225,7 +278,7 @@ const Form = () => {
       }
     } catch (error) {
       console.error("Erro ao enviar dados:", error);
-      alert("Erro ao cadastrar lead.");
+      alert("Erro ao cadastrar lead. Verifique sua conexão e tente novamente.");
     }
   };
 
@@ -476,7 +529,9 @@ const Form = () => {
           {/* Lead Information Section - Always show */}
           {showLeadInfo && (
             <div className="bg-black/80 rounded-lg p-6 shadow-outset border border-white">
-              <h2 className="text-2xl font-bold text-white mb-6">Informações do Lead</h2>
+              <h2 className="text-2xl font-bold text-white mb-6">
+                Informações do Lead
+              </h2>
               <div className="grid md:grid-cols-3 gap-4">
                 <Input
                   placeholder="Nome"
