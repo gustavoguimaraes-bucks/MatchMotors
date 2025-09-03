@@ -4,6 +4,7 @@ import { Link } from 'react-router-dom';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import carBackground from '@/assets/car-bg.jpg';
+import { apiRequest } from '@/config/api';
 
 const Signup = () => {
   const [firstName, setFirstName] = useState('');
@@ -21,11 +22,8 @@ const Signup = () => {
     const nome = `${firstName.trim()} ${lastName.trim()}`.trim();
 
     try {
-      const response = await fetch("http://localhost:3001/api/auth/register", {
+      const response = await apiRequest("/auth/register", {
         method: "POST",
-        headers: { 
-          "Content-Type": "application/json" 
-        },
         body: JSON.stringify({ 
           nome, 
           email: email.trim(), 

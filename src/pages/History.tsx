@@ -5,6 +5,7 @@ import { ArrowLeft, Car, User, Calendar, Phone, Mail } from "lucide-react";
 import { Link } from "react-router-dom";
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { getApiUrl } from "@/config/api";
 
 const History = () => {
   const [matches, setMatches] = useState([]);
@@ -12,7 +13,7 @@ const History = () => {
   useEffect(() => {
     const fetchMatches = async () => {
       try {
-        const res = await fetch("http://localhost:3001/api/matches");
+        const res = await fetch(getApiUrl("/matches"));
         const data = await res.json();
 
         // Mapear os campos para os nomes esperados pelo front

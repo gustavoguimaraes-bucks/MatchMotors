@@ -12,7 +12,7 @@ const app = express();
 
 // CORS configurado para aceitar requisições de qualquer origem
 app.use(cors({
-  origin: true, // Aceita qualquer origem (para desenvolvimento)
+  origin: ['https://matchmotors.site', 'http://localhost:8080'],
   credentials: true
 }));
 

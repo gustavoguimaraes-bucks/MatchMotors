@@ -13,6 +13,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
 import logo from "@/assets/logo.png";
 import carBackground from "@/assets/car-bg.jpg";
+import { apiRequest, getApiUrl } from "@/config/api";
 
 const Form = () => {
   const [searchParams] = useSearchParams();
@@ -30,12 +31,11 @@ const Form = () => {
     }
   }, [vehicleType, businessType, navigate]);
 
-  // Determine which sections to show based on the new logic
-  const showLeadInfo = true; // Always show lead info
-  const showDesiredVehicle = businessType === "procura-se"; // Show for "procura-se"
+  const showLeadInfo = true;
+  const showDesiredVehicle = businessType === "procura-se"; 
   const showCurrentVehicle =
-    businessType === "ta-na-mao" || // Always show for "ta-na-mao"
-    (businessType === "procura-se" && hasTrade === "sim"); // Show for "procura-se" with trade
+    businessType === "ta-na-mao" ||
+    (businessType === "procura-se" && hasTrade === "sim");
 
   // Lead Information
   const [leadName, setLeadName] = useState("");
@@ -59,6 +59,9 @@ const Form = () => {
   const [desiredPriceMin, setDesiredPriceMin] = useState("");
   const [desiredPriceMax, setDesiredPriceMax] = useState("");
   const [desiredObservations, setDesiredObservations] = useState("");
+
+  
+  const [selectedSeller, setSelectedSeller] = useState("");
 
   // Current Vehicle - currentType será definido pelo vehicleType da URL
   const [currentType, setCurrentType] = useState("");
@@ -90,36 +93,39 @@ const Form = () => {
   ) => {
     const tipoAPI = tipo === "carro" ? "cars" : "motorcycles";
 
-    // Consulta modelo (retorna nome da marca e modelo)
-    const modeloResponse = await fetch(
-      `http://localhost:3001/api/fipe/${tipoAPI}/brands/${marcaCode}/years/${anoCode}/models`
-    );
-    const modeloData = await modeloResponse.json();
+    try {
+      // Consulta modelo (retorna nome da marca e modelo)
+      const modeloResponse = await fetch(
+        getApiUrl(`/fipe/${tipoAPI}/brands/${marcaCode}/years/${anoCode}/models`)
+      );
+      const modeloData = await modeloResponse.json();
 
-    const nomeModelo =
-      modeloData.find((m) => m.code === modeloCode)?.name || modeloCode;
+      const nomeModelo =
+        modeloData.find((m) => m.code === modeloCode)?.name || modeloCode;
 
-    // Consulta marca
-    const marcasResponse = await fetch(
-      `http://localhost:3001/api/fipe/${tipoAPI}/brands`
-    );
-    const marcasData = await marcasResponse.json();
+      // Consulta marca
+      const marcasResponse = await fetch(
+        getApiUrl(`/fipe/${tipoAPI}/brands`)
+      );
+      const marcasData = await marcasResponse.json();
 
-    const nomeMarca =
-      marcasData.find((m) => m.code === marcaCode)?.name || marcaCode;
+      const nomeMarca =
+        marcasData.find((m) => m.code === marcaCode)?.name || marcaCode;
 
-    // Consulta ano
-    const anosResponse = await fetch(
-      `http://localhost:3001/api/fipe/${tipoAPI}/brands/${marcaCode}/years`
-    );
-    const anosData = await anosResponse.json();
+      // Consulta ano
+      const anosResponse = await fetch(
+        getApiUrl(`/fipe/${tipoAPI}/brands/${marcaCode}/years`)
+      );
+      const anosData = await anosResponse.json();
 
-    const nomeAno = anosData.find((a) => a.code === anoCode)?.name || anoCode;
+      const nomeAno = anosData.find((a) => a.code === anoCode)?.name || anoCode;
 
-    return `${nomeMarca} ${nomeModelo} ${nomeAno}`;
+      return `${nomeMarca} ${nomeModelo} ${nomeAno}`;
+    } catch (error) {
+      console.error("Erro ao buscar nome completo do carro:", error);
+      return `${marcaCode} ${modeloCode} ${anoCode}`;
+    }
   };
-
-  // Função handleSubmit atualizada para o Form.tsx
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -165,9 +171,8 @@ const Form = () => {
     }
 
     try {
-      const response = await fetch("http://localhost:3001/api/leads", {
+      const response = await apiRequest("/leads", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload),
       });
 
@@ -179,9 +184,8 @@ const Form = () => {
       // Only try to match if showing desired vehicle (procura-se scenario)
       if (showDesiredVehicle) {
         try {
-          const matchResponse = await fetch("http://localhost:3001/api/match", {
+          const matchResponse = await apiRequest("/match", {
             method: "POST",
-            headers: { "Content-Type": "application/json" },
             body: JSON.stringify({ desired, leadId: result.idLead }),
           });
 
@@ -192,9 +196,8 @@ const Form = () => {
             const carro = matchData.carro;
 
             // Salva o match no histórico
-            await fetch("http://localhost:3001/api/matches", {
+            await apiRequest("/matches", {
               method: "POST",
-              headers: { "Content-Type": "application/json" },
               body: JSON.stringify({
                 leadId: result.idLead,
                 matchedLeadId:
@@ -230,7 +233,7 @@ const Form = () => {
 💰 Preço: ${precoFormatado}
 🏷️ Placa: ${carro.placa_completa}
 
-📍 Fonte: Estoque KKA
+🔍 Fonte: Estoque KKA
 🟢 Status: Disponível`
               );
             } else if (matchData.source === "troca") {
@@ -331,7 +334,7 @@ Fontes consultadas:
 
       try {
         const response = await fetch(
-          `http://localhost:3001/api/fipe/${tipoAPI}/brands`
+          getApiUrl(`/fipe/${tipoAPI}/brands`)
         );
         const data = await response.json();
 
@@ -367,7 +370,7 @@ Fontes consultadas:
 
       try {
         const response = await fetch(
-          `http://localhost:3001/api/fipe/${tipoAPI}/brands/${desiredBrand}/years`
+          getApiUrl(`/fipe/${tipoAPI}/brands/${desiredBrand}/years`)
         );
         const data = await response.json();
         setYears(data);
@@ -389,7 +392,7 @@ Fontes consultadas:
 
     const fetchModels = async () => {
       const response = await fetch(
-        `http://localhost:3001/api/fipe/${tipoAPI}/brands/${desiredBrand}/years/${desiredYear}/models`
+        getApiUrl(`/fipe/${tipoAPI}/brands/${desiredBrand}/years/${desiredYear}/models`)
       );
       const data = await response.json();
       setModels(data);
@@ -426,7 +429,7 @@ Fontes consultadas:
 
       try {
         const response = await fetch(
-          `http://localhost:3001/api/fipe/${tipoAPI}/brands`
+          getApiUrl(`/fipe/${tipoAPI}/brands`)
         );
         const data = await response.json();
         setBrandsCurrent(data);
@@ -449,7 +452,7 @@ Fontes consultadas:
 
       try {
         const response = await fetch(
-          `http://localhost:3001/api/fipe/${tipoAPI}/brands/${currentBrand}/years`
+          getApiUrl(`/fipe/${tipoAPI}/brands/${currentBrand}/years`)
         );
         const data = await response.json();
         setYearsCurrent(data);
@@ -471,7 +474,7 @@ Fontes consultadas:
     const fetchCurrentModels = async () => {
       try {
         const response = await fetch(
-          `http://localhost:3001/api/fipe/${tipoAPI}/brands/${currentBrand}/years/${currentYear}/models`
+          getApiUrl(`/fipe/${tipoAPI}/brands/${currentBrand}/years/${currentYear}/models`)
         );
         const data = await response.json();
         setModelsCurrent(data);
@@ -504,6 +507,23 @@ Fontes consultadas:
           className="h-16"
         />
       </div>
+
+          <div className="relative z-10 container mx-auto mt-6 flex justify-center">
+      <Select value={selectedSeller} onValueChange={setSelectedSeller}>
+        <SelectTrigger className="w-[250px] bg-black/80 border border-white">
+          <SelectValue placeholder="Selecione um vendedor" />
+        </SelectTrigger>
+        <SelectContent>
+          <SelectItem value="alessandra">Alessandra</SelectItem>
+          <SelectItem value="diego-cardoso">Diego Cardoso</SelectItem>
+          <SelectItem value="dulio-tunin">Dúlio Tunin</SelectItem>
+          <SelectItem value="jose">José</SelectItem>
+          <SelectItem value="matheus-tavares">Matheus Tavares</SelectItem>
+          <SelectItem value="nathan-dias">Nathan Dias</SelectItem>
+          <SelectItem value="rogerio-marcitelli">Rogerio Marcitelli</SelectItem>
+        </SelectContent>
+      </Select>
+    </div>
 
       <div className="relative z-10 container mx-auto p-8">
         <div className="max-w-4xl mx-auto mb-6">

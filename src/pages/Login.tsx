@@ -4,6 +4,7 @@ import { Link } from 'react-router-dom';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import carBackground from '@/assets/car-bg.jpg';
+import { apiRequest } from '@/config/api';
 
 const Login = () => {
   const [email, setEmail] = useState('');
@@ -16,9 +17,8 @@ const Login = () => {
     setLoading(true);
 
     try {
-      const res = await fetch("http://localhost:3001/api/auth/login", {
+      const res = await apiRequest("/auth/login", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email: email.trim(), password }),
       });
 
