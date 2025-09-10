@@ -86,7 +86,6 @@ const converterAnoFipe = (anoFipe) => {
   return String(anoFipe);
 };
 
-// Busca match em carros de troca (mantém funcionalidade existente)
 exports.buscarMatchSimples = async (desired) => {
   console.log("Iniciando busca de match simples...");
   const client = await db.connect();
@@ -311,58 +310,6 @@ exports.buscarMatchEstoque = async (desired) => {
       };
     }
 
-    // 6. Se ainda não encontrou, tenta busca apenas por marca e ano (comportamento anterior)
-    console.log("🔄 Tentando busca apenas por marca e ano (sem modelo)...");
-
-    const queryOnlyBrand = `
-      SELECT 
-        id, placa_completa, carroceria, combustivel, cor, tipo,
-        marca, marca_id, modelo_id, modelo_nome, cambio,
-        anofabricacao, anomodelo, preco,
-        ABS(CAST(anofabricacao AS INTEGER) - $3) as diff_fab,
-        ABS(CAST(anomodelo AS INTEGER) - $3) as diff_modelo
-      FROM estoque_kka
-      WHERE marca = $1
-        AND (
-          CAST(anofabricacao AS INTEGER) BETWEEN $2 AND $4
-          OR CAST(anomodelo AS INTEGER) BETWEEN $2 AND $4
-        )
-        AND tipo_id = 1
-      ORDER BY 
-        LEAST(
-          ABS(CAST(anofabricacao AS INTEGER) - $3),
-          ABS(CAST(anomodelo AS INTEGER) - $3)
-        ) ASC,
-        preco ASC
-      LIMIT 3
-    `;
-
-    const resultBrand = await client.query(queryOnlyBrand, [
-      marcaNome,
-      anoNum - 3, // Mais flexível para busca só por marca
-      anoNum,
-      anoNum + 3,
-    ]);
-
-    if (resultBrand.rows.length > 0) {
-      console.log(
-        `📊 MATCH POR MARCA E ANO ENCONTRADO! ${resultBrand.rows.length} veículos`
-      );
-      const carro = resultBrand.rows[0];
-      console.log(
-        `Veículo encontrado: ${carro.marca} ${carro.modelo_nome} ${carro.anofabricacao} (busca por marca apenas)`
-      );
-
-      return {
-        carro: {
-          ...carro,
-          fonte: "estoque_kka",
-          match_type: "brand_year_only",
-        },
-        tipo: "estoque",
-      };
-    }
-
     console.log("❌ Nenhum veículo encontrado");
     return null;
   } catch (error) {
@@ -499,55 +446,6 @@ exports.buscarMatchHistorico = async (desired) => {
           ...venda,
           fonte: "vendas_historicas_kka",
           match_type: "flexible",
-          diferenca_anos: Math.min(venda.diff_fab, venda.diff_modelo),
-        },
-        tipo: "historico",
-      };
-    }
-
-    // 5. Busca apenas por marca como último recurso
-    console.log("🔄 Tentando busca apenas por marca...");
-
-    const queryMarca = `
-      SELECT 
-        id, placa, tipo_veiculo,
-        marca, modelo,
-        ano_fabricacao, ano_modelo, venda_com_desconto, vendedor,
-        ABS(CAST(ano_fabricacao AS INTEGER) - $2) as diff_fab,
-        ABS(CAST(ano_modelo AS INTEGER) - $2) as diff_modelo
-      FROM vendas_historicas_kka
-      WHERE UPPER(TRIM(marca)) = UPPER(TRIM($1))
-        AND (
-          CAST(ano_fabricacao AS INTEGER) BETWEEN $3 AND $4
-          OR CAST(ano_modelo AS INTEGER) BETWEEN $3 AND $4
-        )
-      ORDER BY 
-        LEAST(
-          ABS(CAST(ano_fabricacao AS INTEGER) - $2),
-          ABS(CAST(ano_modelo AS INTEGER) - $2)
-        ) ASC,
-        venda_com_desconto ASC
-      LIMIT 3
-    `;
-
-    const resultMarca = await client.query(queryMarca, [
-      fipeData.marcaNome,
-      anoNum, // ano desejado
-      anoNum - 3, // ano mínimo (mais flexível)
-      anoNum + 3, // ano máximo (mais flexível)
-    ]);
-
-    if (resultMarca.rows.length > 0) {
-      console.log(
-        `📊 MATCH POR MARCA NO HISTÓRICO! ${resultMarca.rows.length} vendas encontradas`
-      );
-      const venda = resultMarca.rows[0];
-
-      return {
-        carro: {
-          ...venda,
-          fonte: "vendas_historicas_kka",
-          match_type: "brand_only",
           diferenca_anos: Math.min(venda.diff_fab, venda.diff_modelo),
         },
         tipo: "historico",
