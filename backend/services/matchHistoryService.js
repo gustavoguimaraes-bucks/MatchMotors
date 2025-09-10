@@ -2,11 +2,16 @@ const db = require("../db");
 const fipeService = require("./fipeService");
 
 //Insere matches na tabela do banco de dados
-exports.salvarMatch = async ({ leadId, matchedLeadId, desired, available }) => {
+exports.salvarMatch = async ({
+  leadId,
+  matchedLeadId,
+  desired,
+  available,
+  source,
+}) => {
   const client = await db.connect();
 
   try {
-    
     const desiredInfo = {
       tipo: desired.desiredType,
       marca: desired.desiredBrand,
@@ -16,29 +21,71 @@ exports.salvarMatch = async ({ leadId, matchedLeadId, desired, available }) => {
       carroceria: desired.desiredCarroceria,
     };
 
-    const availableInfo = {
-      tipo: available.tipo || "carro",
-      marca: available.marca,
-      modelo: available.modelo,
-      ano: available.ano,
-      cor: available.cor,
-      carroceria: available.carroceria,
-    };
+    let availableInfo;
+
+    // Handle different match sources
+    if (source === "historico") {
+      // For historical sales data
+      availableInfo = {
+        tipo: available.tipo_veiculo || "carro",
+        marca: available.marca,
+        modelo: available.modelo,
+        ano: available.ano_fabricacao || available.ano_modelo,
+        cor: "Não informado", // Historical data might not have color
+        carroceria: "Não informado", // Historical data might not have body type
+        preco: available.venda_com_desconto,
+        fonte: "Histórico de Vendas KKA",
+        vendedor: available.vendedor,
+        placa: available.placa,
+        match_type: available.match_type,
+      };
+    } else if (source === "estoque") {
+      // For inventory data
+      availableInfo = {
+        tipo: available.tipo || "carro",
+        marca: available.marca,
+        modelo: available.modelo_nome || available.modelo,
+        ano: available.anofabricacao || available.anomodelo,
+        cor: available.cor,
+        carroceria: available.carroceria,
+        preco: available.preco,
+        fonte: "Estoque KKA",
+        placa: available.placa_completa,
+        match_type: available.match_type,
+        combustivel: available.combustivel,
+        cambio: available.cambio,
+      };
+    } else {
+      // For trade matches (original logic)
+      availableInfo = {
+        tipo: available.tipo || "carro",
+        marca: available.marca,
+        modelo: available.modelo,
+        ano: available.ano,
+        cor: available.cor,
+        carroceria: available.carroceria,
+        fonte: "Troca entre Leads",
+      };
+    }
 
     const desiredFormatado = await fipeService.formatarCarro(desiredInfo);
-    const availableFormatado = await fipeService.formatarCarro(availableInfo);
+    const availableFormatado =
+      source === "historico" || source === "estoque"
+        ? availableInfo // Don't format historical/inventory data through FIPE
+        : await fipeService.formatarCarro(availableInfo);
 
     const query = `
-      INSERT INTO matches (lead_id, matched_lead_id, desired_info, available_info)
-      VALUES ($1, $2, $3, $4)
+      INSERT INTO matches (lead_id, matched_lead_id, desired_info, available_info, source)
+      VALUES ($1, $2, $3, $4, $5)
       RETURNING id
     `;
 
     const values = [
       leadId,
-      matchedLeadId,
+      matchedLeadId, // Will be null for historical/inventory matches
       JSON.stringify(desiredFormatado),
       JSON.stringify(availableFormatado),
+      source || "troca",
     ];
 
     const result = await client.query(query, values);
@@ -53,7 +100,7 @@ exports.listarTodos = async () => {
   const client = await db.connect();
   try {
     const result = await client.query(`
-      SELECT m.id, m.match_date,
+      SELECT m.id, m.match_date, m.source,
              l.nome_do_lead, l.email_do_lead, l.telefone_do_lead,
              m.desired_info, m.available_info
       FROM matches m
@@ -69,6 +116,7 @@ exports.listarTodos = async () => {
       desiredVehicle: row.desired_info,
       availableVehicle: row.available_info,
       matchDate: row.match_date,
+      source: row.source,
       status: row.status,
     }));
   } finally {

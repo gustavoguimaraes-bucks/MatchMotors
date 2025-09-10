@@ -10,28 +10,37 @@ exports.listarMatches = async (req, res) => {
   }
 };
 
-  exports.inserirMatchNoHistorico = async (req, res) => {
-    try {
-      const { leadId, matchedLeadId, desired, available } = req.body;
+exports.inserirMatchNoHistorico = async (req, res) => {
+  try {
+    const { leadId, matchedLeadId, desired, available, source } = req.body;
 
-      if (!leadId || !matchedLeadId || !desired || !available) {
-        return res
-          .status(400)
-          .json({ error: "Dados incompletos para salvar match." });
-      }
-
-      const result = await matchHistoryService.salvarMatch({
-        leadId,
-        matchedLeadId,
-        desired,
-        available,
-      });
-
-      res
-        .status(201)
-        .json({ message: "Match salvo com sucesso!", id: result.id });
-    } catch (error) {
-      console.error("Erro ao salvar match no histórico:", error);
-      res.status(500).json({ error: "Erro interno ao salvar match." });
+    if (!leadId || !desired || !available) {
+      return res
+        .status(400)
+        .json({ error: "Dados incompletos para salvar match." });
     }
-  };
+
+    // For historical and inventory matches, matchedLeadId can be null
+    // For trade matches, matchedLeadId is required
+    if (source === "troca" && !matchedLeadId) {
+      return res
+        .status(400)
+        .json({ error: "matchedLeadId é obrigatório para matches de troca." });
+    }
+
+    const result = await matchHistoryService.salvarMatch({
+      leadId,
+      matchedLeadId: matchedLeadId || null, // Allow null for non-trade matches
+      desired,
+      available,
+      source: source || "troca", // Default to 'troca' for backward compatibility
+    });
+
+    res
+      .status(201)
+      .json({ message: "Match salvo com sucesso!", id: result.id });
+  } catch (error) {
+    console.error("Erro ao salvar match no histórico:", error);
+    res.status(500).json({ error: "Erro interno ao salvar match." });
+  }
+};

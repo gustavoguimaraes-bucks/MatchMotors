@@ -32,7 +32,7 @@ const Form = () => {
   }, [vehicleType, businessType, navigate]);
 
   const showLeadInfo = true;
-  const showDesiredVehicle = businessType === "procura-se"; 
+  const showDesiredVehicle = businessType === "procura-se";
   const showCurrentVehicle =
     businessType === "ta-na-mao" ||
     (businessType === "procura-se" && hasTrade === "sim");
@@ -60,7 +60,6 @@ const Form = () => {
   const [desiredPriceMax, setDesiredPriceMax] = useState("");
   const [desiredObservations, setDesiredObservations] = useState("");
 
-  
   const [selectedSeller, setSelectedSeller] = useState("");
 
   // Current Vehicle - currentType será definido pelo vehicleType da URL
@@ -96,7 +95,9 @@ const Form = () => {
     try {
       // Consulta modelo (retorna nome da marca e modelo)
       const modeloResponse = await fetch(
-        getApiUrl(`/fipe/${tipoAPI}/brands/${marcaCode}/years/${anoCode}/models`)
+        getApiUrl(
+          `/fipe/${tipoAPI}/brands/${marcaCode}/years/${anoCode}/models`
+        )
       );
       const modeloData = await modeloResponse.json();
 
@@ -104,9 +105,7 @@ const Form = () => {
         modeloData.find((m) => m.code === modeloCode)?.name || modeloCode;
 
       // Consulta marca
-      const marcasResponse = await fetch(
-        getApiUrl(`/fipe/${tipoAPI}/brands`)
-      );
+      const marcasResponse = await fetch(getApiUrl(`/fipe/${tipoAPI}/brands`));
       const marcasData = await marcasResponse.json();
 
       const nomeMarca =
@@ -233,8 +232,38 @@ const Form = () => {
 💰 Preço: ${precoFormatado}
 🏷️ Placa: ${carro.placa_completa}
 
-🔍 Fonte: Estoque KKA
+📍 Fonte: Estoque KKA
 🟢 Status: Disponível`
+              );
+            } else if (matchData.source === "historico") {
+              // NEW: Match encontrado no histórico de vendas KKA
+              const matchType =
+                carro.match_type === "flexible"
+                  ? " (busca flexível)"
+                  : carro.match_type === "brand_only"
+                  ? " (busca por marca)"
+                  : "";
+
+              const precoFormatado = carro.venda_com_desconto
+                ? new Intl.NumberFormat("pt-BR", {
+                    style: "currency",
+                    currency: "BRL",
+                  }).format(carro.venda_com_desconto)
+                : "Não informado";
+
+              alert(
+                `📊 MATCH ENCONTRADO NO HISTÓRICO KKA!${matchType}
+
+🚗 Veículo: ${carro.marca} ${carro.modelo}
+📅 Ano Fabricação: ${carro.ano_fabricacao}
+📅 Ano Modelo: ${carro.ano_modelo}
+🏷️ Placa: ${carro.placa}
+💰 Preço de Venda: ${precoFormatado}
+👤 Vendedor: ${carro.vendedor || "Não informado"}
+${carro.diferenca_anos ? `📏 Diferença de anos: ${carro.diferenca_anos}` : ""}
+
+📍 Fonte: Histórico de Vendas KKA
+📈 Status: Referência de Preço`
               );
             } else if (matchData.source === "troca") {
               // Match encontrado em carros de troca
@@ -265,8 +294,9 @@ const Form = () => {
 ❌ Nenhum match encontrado no momento.
 
 Fontes consultadas:
-✓ Estoque KKA da concessionária  
-✓ Carros disponíveis para troca`
+✅ Estoque KKA da concessionária  
+✅ Histórico de vendas KKA
+✅ Carros disponíveis para troca`
             );
           }
         } catch (error) {
@@ -333,9 +363,7 @@ Fontes consultadas:
       if (!tipoAPI) return;
 
       try {
-        const response = await fetch(
-          getApiUrl(`/fipe/${tipoAPI}/brands`)
-        );
+        const response = await fetch(getApiUrl(`/fipe/${tipoAPI}/brands`));
         const data = await response.json();
 
         // Verifica se houve dados antes de setar
@@ -392,7 +420,9 @@ Fontes consultadas:
 
     const fetchModels = async () => {
       const response = await fetch(
-        getApiUrl(`/fipe/${tipoAPI}/brands/${desiredBrand}/years/${desiredYear}/models`)
+        getApiUrl(
+          `/fipe/${tipoAPI}/brands/${desiredBrand}/years/${desiredYear}/models`
+        )
       );
       const data = await response.json();
       setModels(data);
@@ -428,9 +458,7 @@ Fontes consultadas:
       if (!tipoAPI) return;
 
       try {
-        const response = await fetch(
-          getApiUrl(`/fipe/${tipoAPI}/brands`)
-        );
+        const response = await fetch(getApiUrl(`/fipe/${tipoAPI}/brands`));
         const data = await response.json();
         setBrandsCurrent(data);
       } catch (error) {
@@ -474,7 +502,9 @@ Fontes consultadas:
     const fetchCurrentModels = async () => {
       try {
         const response = await fetch(
-          getApiUrl(`/fipe/${tipoAPI}/brands/${currentBrand}/years/${currentYear}/models`)
+          getApiUrl(
+            `/fipe/${tipoAPI}/brands/${currentBrand}/years/${currentYear}/models`
+          )
         );
         const data = await response.json();
         setModelsCurrent(data);
@@ -508,22 +538,24 @@ Fontes consultadas:
         />
       </div>
 
-          <div className="relative z-10 container mx-auto mt-6 flex justify-center">
-      <Select value={selectedSeller} onValueChange={setSelectedSeller}>
-        <SelectTrigger className="w-[250px] bg-black/80 border border-white">
-          <SelectValue placeholder="Selecione um vendedor" />
-        </SelectTrigger>
-        <SelectContent>
-          <SelectItem value="alessandra">Alessandra</SelectItem>
-          <SelectItem value="diego-cardoso">Diego Cardoso</SelectItem>
-          <SelectItem value="dulio-tunin">Dúlio Tunin</SelectItem>
-          <SelectItem value="jose">José</SelectItem>
-          <SelectItem value="matheus-tavares">Matheus Tavares</SelectItem>
-          <SelectItem value="nathan-dias">Nathan Dias</SelectItem>
-          <SelectItem value="rogerio-marcitelli">Rogerio Marcitelli</SelectItem>
-        </SelectContent>
-      </Select>
-    </div>
+      <div className="relative z-10 container mx-auto mt-6 flex justify-center">
+        <Select value={selectedSeller} onValueChange={setSelectedSeller}>
+          <SelectTrigger className="w-[250px] bg-black/80 border border-white">
+            <SelectValue placeholder="Selecione um vendedor" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="alessandra">Alessandra</SelectItem>
+            <SelectItem value="diego-cardoso">Diego Cardoso</SelectItem>
+            <SelectItem value="dulio-tunin">Dúlio Tunin</SelectItem>
+            <SelectItem value="jose">José</SelectItem>
+            <SelectItem value="matheus-tavares">Matheus Tavares</SelectItem>
+            <SelectItem value="nathan-dias">Nathan Dias</SelectItem>
+            <SelectItem value="rogerio-marcitelli">
+              Rogerio Marcitelli
+            </SelectItem>
+          </SelectContent>
+        </Select>
+      </div>
 
       <div className="relative z-10 container mx-auto p-8">
         <div className="max-w-4xl mx-auto mb-6">

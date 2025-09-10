@@ -1,12 +1,19 @@
 // backend/controllers/matchController.js
-const matchService = require('../services/matchService');
+const matchService = require("../services/matchService");
 
 exports.buscarMatch = async (req, res) => {
   try {
     const { desired } = req.body;
 
-    if (!desired || !desired.desiredBrand || !desired.desiredModel || !desired.desiredYear) {
-      return res.status(400).json({ error: 'Parâmetros de busca incompletos.' });
+    if (
+      !desired ||
+      !desired.desiredBrand ||
+      !desired.desiredModel ||
+      !desired.desiredYear
+    ) {
+      return res
+        .status(400)
+        .json({ error: "Parâmetros de busca incompletos." });
     }
 
     // Usa a nova função de match completo
@@ -18,7 +25,7 @@ exports.buscarMatch = async (req, res) => {
         source: match.source, // 'estoque' ou 'troca'
         carro: match.carro,
         lead: match.lead || null, // Lead só existe para matches de troca
-        tipo: match.tipo
+        tipo: match.tipo,
       });
     } else {
       res.status(200).json({ found: false });
@@ -34,8 +41,15 @@ exports.buscarMatchEstoque = async (req, res) => {
   try {
     const { desired } = req.body;
 
-    if (!desired || !desired.desiredBrand || !desired.desiredModel || !desired.desiredYear) {
-      return res.status(400).json({ error: 'Parâmetros de busca incompletos.' });
+    if (
+      !desired ||
+      !desired.desiredBrand ||
+      !desired.desiredModel ||
+      !desired.desiredYear
+    ) {
+      return res
+        .status(400)
+        .json({ error: "Parâmetros de busca incompletos." });
     }
 
     const match = await matchService.buscarMatchEstoque(desired);
@@ -43,9 +57,9 @@ exports.buscarMatchEstoque = async (req, res) => {
     if (match) {
       res.status(200).json({
         found: true,
-        source: 'estoque',
+        source: "estoque",
         carro: match.carro,
-        tipo: match.tipo
+        tipo: match.tipo,
       });
     } else {
       res.status(200).json({ found: false });
@@ -61,8 +75,15 @@ exports.buscarMatchAvancado = async (req, res) => {
   try {
     const { desired } = req.body;
 
-    if (!desired || !desired.desiredBrand || !desired.desiredModel || !desired.desiredYear) {
-      return res.status(400).json({ error: 'Parâmetros de busca incompletos.' });
+    if (
+      !desired ||
+      !desired.desiredBrand ||
+      !desired.desiredModel ||
+      !desired.desiredYear
+    ) {
+      return res
+        .status(400)
+        .json({ error: "Parâmetros de busca incompletos." });
     }
 
     const match = await matchService.buscarMatchAvancado(desired);
@@ -74,7 +95,7 @@ exports.buscarMatchAvancado = async (req, res) => {
         carro: match.carro,
         lead: match.lead || null,
         tipo: match.tipo,
-        matchType: 'avançado' // Identifica que foi um match flexível
+        matchType: "avançado", // Identifica que foi um match flexível
       });
     } else {
       res.status(200).json({ found: false });
