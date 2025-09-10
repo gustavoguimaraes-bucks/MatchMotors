@@ -14,6 +14,7 @@ import { Button } from "@/components/ui/button";
 import logo from "@/assets/logo.png";
 import carBackground from "@/assets/car-bg.jpg";
 import { apiRequest, getApiUrl } from "@/config/api";
+import { Link } from "react-router-dom";
 
 const Form = () => {
   const [searchParams] = useSearchParams();
@@ -194,18 +195,37 @@ const Form = () => {
           if (matchData.found) {
             const carro = matchData.carro;
 
-            // Salva o match no histórico
-            await apiRequest("/matches", {
-              method: "POST",
-              body: JSON.stringify({
-                leadId: result.idLead,
-                matchedLeadId:
-                  matchData.source === "troca" ? carro.lead_id : null,
-                desired,
-                available: carro,
-                source: matchData.source,
-              }),
-            });
+            const normalizedAvailable = {
+              id: carro.id,
+              placa: carro.placa_completa || carro.placa,
+              marca: carro.marca,
+              modelo: carro.modelo_nome || carro.modelo,
+              ano_fabricacao: carro.anofabricacao || carro.ano_fabricacao,
+              ano_modelo: carro.anomodelo || carro.ano_modelo,
+              cor: carro.cor || null,
+              preco: carro.preco || carro.venda_com_desconto,
+              combustivel: carro.combustivel || null,
+              cambio: carro.cambio || null,
+              carroceria: carro.carroceria || null,
+              vendedor: carro.vendedor || null,
+            };
+
+            try {
+              await apiRequest("/matches", {
+                method: "POST",
+                body: JSON.stringify({
+                  leadId: result.idLead,
+                  matchedLeadId:
+                    matchData.source === "troca" ? carro.lead_id : null,
+                  desired,
+                  available: normalizedAvailable, // Enviando o objeto padronizado
+                  source: matchData.source,
+                }),
+              });
+              console.log("Match salvo com sucesso na tabela de histórico.");
+            } catch (saveError) {
+              console.error("Falha ao salvar o match na tabela:", saveError);
+            }
 
             // Tratamento diferenciado baseado na fonte do match
             if (matchData.source === "estoque") {
@@ -529,13 +549,15 @@ Fontes consultadas:
         className="imagemlogo"
         style={{ marginTop: "50px", display: "flex", justifyContent: "center" }}
       >
-        <img
-          src={logo}
-          width="400px"
-          height="10000px"
-          alt="Logo MatchMotors"
-          className="h-16"
-        />
+        <Link to="/">
+          <img
+            src={logo}
+            width="400px"
+            height="10000px"
+            alt="Logo MatchMotors"
+            className="h-16"
+          />
+        </Link>
       </div>
 
       <div className="relative z-10 container mx-auto mt-6 flex justify-center">
