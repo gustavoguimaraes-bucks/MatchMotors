@@ -362,7 +362,7 @@ exports.buscarMatchHistorico = async (desired) => {
     const queryExata = `
       SELECT 
         id, placa, tipo_veiculo,
-        marca, modelo,
+        marca, modelo, cliente_saida, cliente_entrada,
         ano_fabricacao, ano_modelo, venda_com_desconto, vendedor
       FROM vendas_historicas_kka
       WHERE UPPER(TRIM(marca)) = UPPER(TRIM($1))
@@ -407,7 +407,7 @@ exports.buscarMatchHistorico = async (desired) => {
     const queryFlex = `
       SELECT 
         id, placa, tipo_veiculo,
-        marca, modelo,
+        marca, modelo, cliente_saida, cliente_entrada,
         ano_fabricacao, ano_modelo, venda_com_desconto, vendedor,
         ABS(CAST(ano_fabricacao AS INTEGER) - $4) as diff_fab,
         ABS(CAST(ano_modelo AS INTEGER) - $4) as diff_modelo

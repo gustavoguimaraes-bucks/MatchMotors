@@ -280,6 +280,8 @@ const Form = () => {
 🏷️ Placa: ${carro.placa}
 💰 Preço de Venda: ${precoFormatado}
 👤 Vendedor: ${carro.vendedor || "Não informado"}
+➡️ Cliente de Saída: ${carro.cliente_saida || "Não informado"}
+⬅️ Cliente de Entrada: ${carro.cliente_entrada || "Não informado"}
 ${carro.diferenca_anos ? `📏 Diferença de anos: ${carro.diferenca_anos}` : ""}
 
 📍 Fonte: Histórico de Vendas KKA
