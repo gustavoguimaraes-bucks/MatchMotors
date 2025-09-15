@@ -463,6 +463,65 @@ exports.buscarMatchHistorico = async (desired) => {
   }
 };
 
+exports.buscarMatchParaTaNaMao = async (carroCorrente) => {
+  console.log("=== INICIANDO BUSCA PARA CARRO 'TÁ NA MÃO' ===");
+  if (!carroCorrente || !carroCorrente.currentBrand) {
+    return null;
+  }
+
+  const client = await db.connect();
+  try {
+    const anoNum = parseInt(
+      String(carroCorrente.currentYear).split("-")[0],
+      10
+    );
+
+    const query = `
+      SELECT cd.*, l.nome_do_lead, l.email_do_lead, l.telefone_do_lead
+      FROM carros_desejados cd
+      JOIN leads l ON cd.lead_id = l.id
+      WHERE cd.marca = $1
+        AND cd.modelo = $2
+        AND CAST(split_part(cd.ano, '-', 1) AS INTEGER) BETWEEN $3 AND $4
+      LIMIT 5
+    `;
+
+    const values = [
+      carroCorrente.currentBrand,
+      carroCorrente.currentModel,
+      anoNum - 2, // Ano mínimo
+      anoNum + 2, // Ano máximo
+    ];
+
+    const result = await client.query(query, values);
+
+    if (result.rows.length === 0) {
+      console.log("❌ Nenhum match encontrado.");
+      return null;
+    }
+
+    const leadQueDeseja = result.rows[0];
+    const leadInfo = {
+      nome: leadQueDeseja.nome_do_lead,
+      email: leadQueDeseja.email_do_lead,
+      telefone: leadQueDeseja.telefone_do_lead,
+    };
+
+    console.log(
+      `✅ MATCH ENCONTRADO! Lead: ${leadInfo.nome}, ${leadInfo.email}, ${leadInfo.telefone}`
+    );
+    return {
+      found: true,
+      lead: leadInfo,
+    };
+  } catch (error) {
+    console.error("💥 ERRO na busca:", error);
+    return null;
+  } finally {
+    client.release();
+  }
+};
+
 // Busca match completo - Versão atualizada com histórico
 exports.buscarMatchCompleto = async (desired) => {
   console.log("=== INICIANDO BUSCA DE MATCH COMPLETO ===");

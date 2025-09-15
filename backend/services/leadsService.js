@@ -1,11 +1,11 @@
-const db = require('../db');
+const db = require("../db");
 
 // Serviço que insere o lead e os carros no banco
 exports.inserirLeadCompleto = async (data) => {
   const client = await db.connect();
 
   try {
-    await client.query('BEGIN'); // Inicia transação
+    await client.query("BEGIN"); // Inicia transação
 
     // 1. Inserir lead
     const insertLead = `
@@ -50,11 +50,10 @@ exports.inserirLeadCompleto = async (data) => {
       ]);
     }
 
-    await client.query('COMMIT'); // Confirma transação
-    return { status: 'ok', leadId };
-
+    await client.query("COMMIT"); // Confirma transação
+    return { status: "ok", leadId };
   } catch (error) {
-    await client.query('ROLLBACK'); // Reverte em caso de erro
+    await client.query("ROLLBACK"); // Reverte em caso de erro
     throw error;
   } finally {
     client.release(); // Libera conexão

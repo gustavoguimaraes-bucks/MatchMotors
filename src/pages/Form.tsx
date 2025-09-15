@@ -181,7 +181,14 @@ const Form = () => {
       const result = await response.json();
       console.log("Lead enviado com sucesso:", result);
 
-      // Only try to match if showing desired vehicle (procura-se scenario)
+      if (result.reverseMatch && result.reverseMatch.found) {
+        const leadQueDeseja = result.reverseMatch.lead;
+        alert(
+          `🎯 MATCH ENCONTRADO!\n\nO veículo que você acabou de cadastrar é desejado por um cliente já registrado!\n\n👤 Nome do Cliente: ${leadQueDeseja.nome}\n📞 Telefone: ${leadQueDeseja.telefone}\n✉️ Email: ${leadQueDeseja.email}`
+        );
+        return;
+      }
+
       if (showDesiredVehicle) {
         try {
           const matchResponse = await apiRequest("/match", {
