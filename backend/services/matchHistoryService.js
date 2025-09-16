@@ -12,6 +12,13 @@ exports.salvarMatch = async ({
   const client = await db.connect();
 
   try {
+    console.log("=== SALVANDO MATCH ===");
+    console.log("Source:", source);
+    console.log("Lead ID:", leadId);
+    console.log("Matched Lead ID:", matchedLeadId);
+    console.log("Desired data:", JSON.stringify(desired, null, 2));
+    console.log("Available data:", JSON.stringify(available, null, 2));
+
     const desiredInfo = {
       tipo: desired.desiredType,
       marca: desired.desiredBrand,
@@ -20,6 +27,11 @@ exports.salvarMatch = async ({
       cor: desired.desiredColor,
       carroceria: desired.desiredCarroceria,
     };
+
+    console.log(
+      "Desired info formatted:",
+      JSON.stringify(desiredInfo, null, 2)
+    );
 
     let availableInfo;
 
@@ -54,6 +66,19 @@ exports.salvarMatch = async ({
         match_type: available.match_type,
         combustivel: available.combustivel,
         cambio: available.cambio,
+      };
+    } else if (source === "reverse_match") {
+      // For reverse matches (when a "tá na mão" matches an existing "procura-se")
+      availableInfo = {
+        tipo: available.tipo || "carro",
+        marca: available.marca,
+        modelo: available.modelo,
+        ano: available.ano,
+        cor: available.cor,
+        carroceria: available.carroceria,
+        preco: available.preco,
+        fonte: "Match Reverso (Tá na Mão -> Procura-se)",
+        km: available.km,
       };
     } else {
       // For trade matches (original logic)
