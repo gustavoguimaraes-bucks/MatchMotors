@@ -12,7 +12,14 @@ exports.listarMatches = async (req, res) => {
 
 exports.inserirMatchNoHistorico = async (req, res) => {
   try {
-    const { leadId, matchedLeadId, desired, available, source } = req.body;
+    const {
+      leadId,
+      matchedLeadId,
+      desired,
+      available,
+      source,
+      vendedor_responsavel,
+    } = req.body;
 
     if (!leadId || !desired || !available) {
       return res
@@ -33,7 +40,8 @@ exports.inserirMatchNoHistorico = async (req, res) => {
       matchedLeadId: matchedLeadId || null, // Allow null for non-trade matches
       desired,
       available,
-      source: source || "troca", // Default to 'troca' for backward compatibility
+      source: source || "troca",
+      vendedor_responsavel,
     });
 
     res

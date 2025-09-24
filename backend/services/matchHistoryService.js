@@ -8,6 +8,7 @@ exports.salvarMatch = async ({
   desired,
   available,
   source,
+  vendedor_responsavel,
 }) => {
   const client = await db.connect();
 
@@ -16,6 +17,7 @@ exports.salvarMatch = async ({
     console.log("Source:", source);
     console.log("Lead ID:", leadId);
     console.log("Matched Lead ID:", matchedLeadId);
+    console.log("Vendedor Responsável:", vendedor_responsavel);
     console.log("Desired data:", JSON.stringify(desired, null, 2));
     console.log("Available data:", JSON.stringify(available, null, 2));
 
@@ -100,8 +102,8 @@ exports.salvarMatch = async ({
         : await fipeService.formatarCarro(availableInfo);
 
     const query = `
-      INSERT INTO matches (lead_id, matched_lead_id, desired_info, available_info, source)
-      VALUES ($1, $2, $3, $4, $5)
+      INSERT INTO matches (lead_id, matched_lead_id, desired_info, available_info, source, vendedor_responsavel)
+      VALUES ($1, $2, $3, $4, $5, $6)
       RETURNING id
     `;
 
@@ -111,6 +113,7 @@ exports.salvarMatch = async ({
       JSON.stringify(desiredFormatado),
       JSON.stringify(availableFormatado),
       source || "troca",
+      vendedor_responsavel,
     ];
 
     const result = await client.query(query, values);
@@ -127,6 +130,7 @@ exports.listarTodos = async () => {
     const result = await client.query(`
       SELECT m.id, m.match_date, m.source,
              l.nome_do_lead, l.email_do_lead, l.telefone_do_lead,
+             m.vendedor_responsavel,
              m.desired_info, m.available_info
       FROM matches m
       JOIN leads l ON m.lead_id = l.id
@@ -142,6 +146,7 @@ exports.listarTodos = async () => {
       availableVehicle: row.available_info,
       matchDate: row.match_date,
       source: row.source,
+      vendedorResponsavel: row.vendedor_responsavel,
       status: row.status,
     }));
   } finally {
