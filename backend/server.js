@@ -13,7 +13,12 @@ const app = express();
 // CORS configurado para aceitar requisições de qualquer origem
 app.use(
   cors({
-    origin: ["https://matchmotors.site", "http://localhost:8080"],
+    origin: [
+      "https://matchmotors.site",
+      "http://localhost:8080",
+      "https://formulario.kikoautos.com.br",
+      "http://formulario.kikoautos.com.br/",
+    ],
     credentials: true,
   })
 );
