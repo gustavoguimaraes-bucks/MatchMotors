@@ -1,6 +1,7 @@
 const leadsService = require("../services/leadsService");
 const matchService = require("../services/matchService");
 const matchHistoryService = require("../services/matchHistoryService");
+const webhookService = require("../services/webhookService");
 
 exports.createLead = async (req, res) => {
   try {
@@ -13,6 +14,18 @@ exports.createLead = async (req, res) => {
       desired: desired,
       current: current,
     });
+
+    try {
+      await webhookService.sendLead({
+        leadId: result.leadId,
+        lead,
+        desired,
+        current,
+      });
+    } catch (whErr) {
+      // Segurança: não quebra a resposta ao cliente
+      console.error("Erro ao enviar webhook n8n:", whErr);
+    }
 
     let reverseMatch = null;
     // Se um carro "Tá na Mão" (current) foi cadastrado, procure por um match reverso.

@@ -1,5 +1,6 @@
 const db = require("../db");
 const fipeService = require("./fipeService");
+const webhookService = require("./webhookService");
 
 //Insere matches na tabela do banco de dados
 exports.salvarMatch = async ({
@@ -117,7 +118,84 @@ exports.salvarMatch = async ({
     ];
 
     const result = await client.query(query, values);
-    return result.rows[0];
+    const matchRow = result.rows[0];
+
+    // --- Buscar infos dos leads para o webhook ---
+    const leadQry = `SELECT id, nome_do_lead, email_do_lead, telefone_do_lead FROM leads WHERE id = $1`;
+    const leadA = await client.query(leadQry, [leadId]);
+    const leadDesejaRaw = leadA.rows[0] || null;
+
+    let leadTemRaw = null;
+    if (matchedLeadId) {
+      const leadB = await client.query(leadQry, [matchedLeadId]);
+      leadTemRaw = leadB.rows[0] || null;
+    }
+
+    const isTroca = !source || source === "troca";
+    const isReverse = source === "reverse_match";
+    const isEstoque = source === "estoque";
+    const isHistorico = source === "historico";
+
+    const leadQueDeseja = isReverse ? leadTemRaw : leadDesejaRaw;
+    const leadQueTem = isReverse ? leadDesejaRaw : leadTemRaw; // pode ser null p/ estoque/histórico
+
+    // Flags pedidas
+    const flags = {
+      origem: source || "troca",
+      is_carros_troca: isTroca || isReverse, // veio de carros_troca
+      is_estoque: isEstoque, // veio do estoque
+      is_vendas_historicas: isHistorico, // veio de vendas históricas
+    };
+
+    // Payload para o n8n
+    const payload = {
+      tipo: "match",
+      match: {
+        id: matchRow.id,
+        date: new Date().toISOString(),
+        source: flags.origem,
+        vendedor_responsavel,
+      },
+      // Quem deseja o carro (sempre inclui o veículo desejado formatado)
+      lead_deseja: leadQueDeseja
+        ? {
+            id: leadQueDeseja.id,
+            nome: leadQueDeseja.nome_do_lead,
+            email: leadQueDeseja.email_do_lead,
+            telefone: leadQueDeseja.telefone_do_lead,
+          }
+        : null,
+      veiculo_desejado: desiredFormatado, // já foi normalizado por FIPE quando aplicável
+
+      // Quem tem o carro: se for troca/reverse_match e existir matchedLeadId, manda a pessoa;
+      // se for estoque/histórico, manda apenas a "fonte" e o veículo disponível.
+      lead_tem: leadQueTem
+        ? {
+            id: leadQueTem.id,
+            nome: leadQueTem.nome_do_lead,
+            email: leadQueTem.email_do_lead,
+            telefone: leadQueTem.telefone_do_lead,
+          }
+        : isEstoque || isHistorico
+        ? {
+            fonte:
+              availableFormatado?.fonte ||
+              (isEstoque ? "Estoque" : "Histórico de Vendas"),
+          }
+        : null,
+      veiculo_disponivel: availableFormatado,
+
+      flags,
+    };
+
+    // Disparar webhook (não bloqueia a resposta do endpoint que chamou o service)
+    webhookService
+      .sendMatch(payload)
+      .catch((e) =>
+        console.error("Erro ao enviar webhook de match:", e?.message)
+      );
+
+    return matchRow;
   } finally {
     client.release();
   }
