@@ -20,25 +20,42 @@ exports.inserirLeadCompleto = async (data) => {
     ]);
     const leadId = leadResult.rows[0].id;
 
-    // 2. Inserir carro desejado
-    const insertDesejado = `
-      INSERT INTO carros_desejados (lead_id, marca, modelo, ano, cor, carroceria)
-      VALUES ($1, $2, $3, $4, $5, $6)
-    `;
-    await client.query(insertDesejado, [
-      leadId,
-      data.desired.desiredBrand,
-      data.desired.desiredModel,
-      data.desired.desiredYear,
-      data.desired.desiredColor,
-      data.desired.desiredCarroceria,
-    ]);
+    // Guards mínimos (evita linha "em branco")
+    const hasDesired =
+      data.desired &&
+      data.desired.desiredBrand &&
+      data.desired.desiredModel &&
+      data.desired.desiredYear;
+    const hasCurrent =
+      data.current &&
+      data.current.currentBrand &&
+      data.current.currentModel &&
+      data.current.currentYear;
+
+    // 2) Inserir carro desejado (se houver)
+    if (hasDesired) {
+      const insertDesejado = `
+        INSERT INTO carros_desejados
+          (lead_id, marca, modelo, ano, cor, carroceria, vendedor)
+        VALUES
+          ($1, $2, $3, $4, $5, $6, $7)
+      `;
+      await client.query(insertDesejado, [
+        leadId,
+        data.desired.desiredBrand,
+        data.desired.desiredModel,
+        data.desired.desiredYear, // manter código FIPE completo "2012-1"
+        data.desired.desiredColor || null,
+        data.desired.desiredCarroceria || null,
+        data.desired.vendedor_responsavel || null, // <- PEGA DO BLOCO
+      ]);
+    }
 
     // 3. Inserir carro na troca (se enviado)
-    if (data.current) {
+    if (hasCurrent) {
       const insertTroca = `
-        INSERT INTO carros_troca (lead_id, marca, modelo, ano, cor, carroceria)
-        VALUES ($1, $2, $3, $4, $5, $6)
+        INSERT INTO carros_troca (lead_id, marca, modelo, ano, cor, carroceria, vendedor)
+        VALUES ($1, $2, $3, $4, $5, $6, $7)
       `;
       await client.query(insertTroca, [
         leadId,
@@ -47,6 +64,7 @@ exports.inserirLeadCompleto = async (data) => {
         data.current.currentYear,
         data.current.currentColor,
         data.current.currentCarroceria,
+        data.current.vendedor_responsavel || null,
       ]);
     }
 
