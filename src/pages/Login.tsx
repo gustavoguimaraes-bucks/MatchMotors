@@ -1,14 +1,15 @@
-import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { Link } from 'react-router-dom';
-import { Input } from '@/components/ui/input';
-import { Button } from '@/components/ui/button';
-import carBackground from '@/assets/car-bg.jpg';
-import { apiRequest } from '@/config/api';
+import React, { useState } from "react";
+import { useNavigate } from "react-router-dom";
+import { Link } from "react-router-dom";
+import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
+import { Home } from "lucide-react";
+import carBackground from "@/assets/car-bg.jpg";
+import { apiRequest } from "@/config/api";
 
 const Login = () => {
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
 
@@ -41,13 +42,21 @@ const Login = () => {
   };
 
   return (
-    <div 
+    <div
       className="min-h-screen flex items-center justify-center bg-black bg-cover bg-center relative"
       style={{ backgroundImage: `url(${carBackground})` }}
     >
       <div className="absolute inset-0 bg-black bg-opacity-70"></div>
-      
+
       <div className="relative z-10 w-full max-w-md p-8">
+        <div className="flex justify-between items-center mb-8">
+          <Link to="/">
+            <Button variant="outline" size="sm">
+              <Home className="h-4 w-4 mr-2" />
+              Home
+            </Button>
+          </Link>
+        </div>
         <div className="text-center mb-8">
           <h1 className="text-3xl font-light text-white mb-2">
             Seja bem vindo(a) ao <span className="font-bold">MatchMotors</span>!
@@ -83,7 +92,7 @@ const Login = () => {
 
           <div className="text-center">
             <p className="text-gray-400 text-sm">
-              Não tem uma conta?{' '}
+              Não tem uma conta?{" "}
               <Link to="/signup" className="text-white hover:underline">
                 Cadastre-se
               </Link>

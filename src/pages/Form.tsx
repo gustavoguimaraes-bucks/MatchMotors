@@ -15,6 +15,7 @@ import logo from "@/assets/logo.png";
 import carBackground from "@/assets/car-bg.jpg";
 import { apiRequest, getApiUrl } from "@/config/api";
 import { Link } from "react-router-dom";
+import { Home } from "lucide-react";
 
 const Form = () => {
   const [searchParams] = useSearchParams();
@@ -130,6 +131,20 @@ const Form = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
+    if (!selectedSeller) {
+      alert("Por favor, selecione um vendedor antes de continuar.");
+      return;
+    }
+
+    // Pelo menos um contato do lead é obrigatório (email OU telefone)
+    const emailOk = (leadEmail || "").trim().length > 0; // type=email já valida formato se preenchido
+    const phoneDigits = (leadPhone || "").replace(/\D/g, "");
+    const phoneOk = phoneDigits.length >= 10 && phoneDigits.length <= 11; // BR: 10~11 dígitos
+    if (!emailOk && !phoneOk) {
+      alert("Informe pelo menos Email ou Telefone do lead.");
+      return;
+    }
+
     const desired = {
       desiredType,
       desiredBrand,
@@ -160,11 +175,18 @@ const Form = () => {
       currentObservations,
     };
 
-    const payload = {
-      lead: { leadName, leadEmail, leadPhone },
-      desired: showDesiredVehicle ? desired : {},
-      current: showCurrentVehicle ? current : {},
-    };
+    // Anexa o vendedor dentro do bloco correspondente
+    if (showDesiredVehicle) {
+      (desired as any).vendedor_responsavel = selectedSeller;
+    }
+    if (showCurrentVehicle) {
+      (current as any).vendedor_responsavel = selectedSeller;
+    }
+
+    // Envia somente os blocos realmente usados
+    const payload: any = { lead: { leadName, leadEmail, leadPhone } };
+    if (showDesiredVehicle) payload.desired = desired;
+    if (showCurrentVehicle) payload.current = current;
 
     if (!vehicleType || !businessType) {
       return null;
@@ -227,6 +249,7 @@ const Form = () => {
                   desired,
                   available: normalizedAvailable, // Enviando o objeto padronizado
                   source: matchData.source,
+                  vendedor_responsavel: selectedSeller,
                 }),
               });
               console.log("Match salvo com sucesso na tabela de histórico.");
@@ -569,6 +592,13 @@ Fontes consultadas:
         </Link>
       </div>
 
+      <Link to="/">
+        <Button variant="outline" size="sm">
+          <Home className="h-4 w-4 mr-2" />
+          Home
+        </Button>
+      </Link>
+
       <div className="relative z-10 container mx-auto mt-6 flex justify-center">
         <Select value={selectedSeller} onValueChange={setSelectedSeller}>
           <SelectTrigger className="w-[250px] bg-black/80 border border-white">
@@ -627,14 +657,12 @@ Fontes consultadas:
                   placeholder="Email"
                   value={leadEmail}
                   onChange={(e) => setLeadEmail(e.target.value)}
-                  required
                 />
                 <Input
                   type="tel"
                   placeholder="Telefone"
                   value={leadPhone}
                   onChange={(e) => setLeadPhone(e.target.value)}
-                  required
                 />
               </div>
             </div>

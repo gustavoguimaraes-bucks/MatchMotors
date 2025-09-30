@@ -20,22 +20,22 @@ const Index = () => {
 
         <div className="space-x-4">
           <Link to="/login">
-            <Button size="lg" className="px-8">
+            <Button variant="elegant" size="lg" className="px-8">
               Login
             </Button>
           </Link>
           <Link to="/signup">
-            <Button size="lg" className="px-8">
+            <Button variant="elegant" size="lg" className="px-8">
               Cadastro
             </Button>
           </Link>
           <Link to="/selection">
-            <Button size="lg" className="px-8">
+            <Button variant="elegant" size="lg" className="px-8">
               Formulário
             </Button>
           </Link>
           <Link to="/history">
-            <Button size="lg" className="px-8">
+            <Button variant="elegant" size="lg" className="px-8">
               Histórico
             </Button>
           </Link>

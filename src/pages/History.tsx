@@ -1,7 +1,16 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { ArrowLeft, Car, User, Calendar, Phone, Mail } from "lucide-react";
+import {
+  ArrowLeft,
+  Car,
+  User,
+  Calendar,
+  Phone,
+  Mail,
+  Home,
+  UserCheck,
+} from "lucide-react";
 import { Link } from "react-router-dom";
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
@@ -57,11 +66,41 @@ const History = () => {
     }
   }, []);
 
+  // Função para formatar o nome do vendedor
+  const formatVendedorName = (vendedor) => {
+    if (!vendedor) return "Não informado";
+
+    // Converter de kebab-case para formato legível
+    return vendedor
+      .split("-")
+      .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
+      .join(" ");
+  };
+
   return (
     <div className="min-h-screen bg-black bg-car-pattern bg-cover bg-center bg-no-repeat relative">
       <div className="absolute inset-0 bg-black/70"></div>
 
       <div className="relative z-10 container mx-auto px-4 py-8">
+        <div className="flex gap-2">
+          <Link to="/history-procura-se">
+            <Button variant="outline" size="sm">
+              Procura-se
+            </Button>
+          </Link>
+          <Link to="/history-ta-na-mao">
+            <Button variant="outline" size="sm">
+              Tá na Mão
+            </Button>
+          </Link>
+
+          <Link to="/">
+            <Button variant="outline" size="sm">
+              <Home className="h-4 w-4 mr-2" />
+              Home
+            </Button>
+          </Link>
+        </div>
         <div className="flex items-center gap-4 mb-8">
           <Link to="/">
             <Button variant="outline" size="icon">
@@ -127,6 +166,13 @@ const History = () => {
                     <div className="flex items-center gap-2">
                       <Phone className="h-4 w-4" />
                       {match.leadPhone}
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <UserCheck className="h-4 w-4" />
+                      <span className="font-medium">
+                        Vendedor:{" "}
+                        {formatVendedorName(match.vendedorResponsavel)}
+                      </span>
                     </div>
                   </div>
                 </div>
