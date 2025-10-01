@@ -111,3 +111,16 @@ exports.listar = async ({ limit = 50, offset = 0, q }) => {
     client.release();
   }
 };
+
+exports.remover = async (id) => {
+  const client = await db.connect();
+  try {
+    const { rowCount } = await client.query(
+      "DELETE FROM carros_desejados WHERE id = $1",
+      [id]
+    );
+    return rowCount > 0;
+  } finally {
+    client.release();
+  }
+};

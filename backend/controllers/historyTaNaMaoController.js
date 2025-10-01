@@ -14,3 +14,14 @@ exports.listar = async (req, res) => {
     res.status(500).json({ error: "Erro ao buscar histórico Tá na Mão" });
   }
 };
+
+exports.remover = async (req, res) => {
+  try {
+    const ok = await service.remover(req.params.id);
+    if (!ok) return res.status(404).json({ error: "Registro não encontrado" });
+    return res.status(204).end();
+  } catch (err) {
+    console.error("Erro ao deletar Tá na Mão:", err);
+    res.status(500).json({ error: "Erro ao deletar registro" });
+  }
+};

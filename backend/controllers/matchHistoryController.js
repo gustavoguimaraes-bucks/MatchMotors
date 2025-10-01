@@ -52,3 +52,14 @@ exports.inserirMatchNoHistorico = async (req, res) => {
     res.status(500).json({ error: "Erro interno ao salvar match." });
   }
 };
+
+exports.remover = async (req, res) => {
+  try {
+    const ok = await matchHistoryService.remover(req.params.id);
+    if (!ok) return res.status(404).json({ error: "Match não encontrado" });
+    return res.status(204).end();
+  } catch (err) {
+    console.error("Erro ao deletar match:", err);
+    res.status(500).json({ error: "Erro ao deletar match" });
+  }
+};
