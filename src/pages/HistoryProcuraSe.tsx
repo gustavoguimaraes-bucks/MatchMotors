@@ -14,6 +14,12 @@ import {
 } from "lucide-react";
 import { getApiUrl } from "@/config/api";
 
+const capFirst = (v?: string | null) => {
+  const s = (v ?? "").trim();
+  if (!s || s === "-") return s || "-";
+  return s.charAt(0).toUpperCase() + s.slice(1);
+};
+
 const formatAno = (v?: { anoInicio?: string; anoFim?: string } | null) => {
   if (!v) return "-";
   const a = (v.anoInicio ?? "").toString().trim();
@@ -196,8 +202,10 @@ const HistoryProcuraSe = () => {
                         {formatAno(item.veiculoDesejado)}{" "}
                       </p>
                       <p>
-                        <span className="font-medium">Cor:</span>{" "}
-                        {item.veiculoDesejado.cor}
+                        <p>
+                          <span className="font-medium">Cor:</span>{" "}
+                          {capFirst(item.veiculoDesejado?.cor)}
+                        </p>
                       </p>
                       <p>
                         <span className="font-medium">Versão:</span>{" "}

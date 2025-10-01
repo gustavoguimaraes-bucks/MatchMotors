@@ -4,6 +4,23 @@ const db = require("../db");
 exports.inserirLeadCompleto = async (data) => {
   const client = await db.connect();
 
+  const toNumberOrNull = (s) => {
+    if (!s && s !== 0) return null;
+    const n = Number(
+      String(s)
+        .replace(/[^\d,.-]/g, "")
+        .replace(/\.(?=\d{3}(?:\D|$))/g, "")
+        .replace(",", ".")
+    );
+    return Number.isFinite(n) ? n : null;
+  };
+  const composeKmRange = (min, max) => {
+    const a = (min ?? "").toString().trim();
+    const b = (max ?? "").toString().trim();
+    if (!a && !b) return null;
+    return a && b ? `${a} - ${b}` : a || b;
+  };
+
   try {
     await client.query("BEGIN"); // Inicia transação
 
@@ -36,26 +53,29 @@ exports.inserirLeadCompleto = async (data) => {
     if (hasDesired) {
       const insertDesejado = `
         INSERT INTO carros_desejados
-          (lead_id, marca, modelo, ano, cor, carroceria, vendedor)
+          (lead_id, marca, modelo, ano, cor, km, preco_min, preco_max, carroceria, vendedor)
         VALUES
-          ($1, $2, $3, $4, $5, $6, $7)
+          ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
       `;
       await client.query(insertDesejado, [
         leadId,
         data.desired.desiredBrand,
         data.desired.desiredModel,
-        data.desired.desiredYear, // manter código FIPE completo "2012-1"
+        data.desired.desiredYear,
         data.desired.desiredColor || null,
+        data.desired.desiredKmMax,
+        toNumberOrNull(data.desired.desiredPriceMin),
+        toNumberOrNull(data.desired.desiredPriceMax),
         data.desired.desiredCarroceria || null,
-        data.desired.vendedor_responsavel || null, // <- PEGA DO BLOCO
+        data.desired.vendedor_responsavel || null,
       ]);
     }
 
     // 3. Inserir carro na troca (se enviado)
     if (hasCurrent) {
       const insertTroca = `
-        INSERT INTO carros_troca (lead_id, marca, modelo, ano, cor, carroceria, vendedor)
-        VALUES ($1, $2, $3, $4, $5, $6, $7)
+        INSERT INTO carros_troca (lead_id, marca, modelo, ano, cor, km, preco_estimado, carroceria, vendedor)
+        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9 )
       `;
       await client.query(insertTroca, [
         leadId,
@@ -63,7 +83,9 @@ exports.inserirLeadCompleto = async (data) => {
         data.current.currentModel,
         data.current.currentYear,
         data.current.currentColor,
-        data.current.currentCarroceria,
+        toNumberOrNull(data.current.currentKm),
+        toNumberOrNull(data.current.currentPrice),
+        data.current.currentCarroceria || null,
         data.current.vendedor_responsavel || null,
       ]);
     }

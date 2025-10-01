@@ -14,6 +14,12 @@ import {
 } from "lucide-react";
 import { getApiUrl } from "@/config/api";
 
+const capFirst = (v?: string | null) => {
+  const s = (v ?? "").trim();
+  if (!s || s === "-") return s || "-";
+  return s.charAt(0).toUpperCase() + s.slice(1);
+};
+
 type Item = {
   id: number | string;
   lead: { nome: string; email: string; telefone: string };
@@ -189,11 +195,7 @@ const HistoryTaNaMao = () => {
                       </p>
                       <p>
                         <span className="font-medium">Cor:</span>{" "}
-                        {item.veiculoOfertado?.cor ?? "-"}
-                      </p>
-                      <p>
-                        <span className="font-medium">Versão:</span>{" "}
-                        {item.veiculoOfertado?.versao ?? "-"}
+                        {capFirst(item.veiculoOfertado?.cor)}
                       </p>
                       <p>
                         <span className="font-medium">Combustível:</span>{" "}

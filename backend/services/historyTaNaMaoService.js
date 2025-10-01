@@ -16,8 +16,8 @@ async function normalizeCurrent(row) {
       cor: row.cor || "-",
       versao: row.versao || "-",
       combustivel: row.combustivel || "-",
-      km: row.km || "-",
-      preco: row.preco || "-",
+      km: row.km ?? "-",
+      preco: row.preco_estimado ?? "-",
     };
   }
 
@@ -94,6 +94,8 @@ exports.listar = async ({ limit = 50, offset = 0, q }) => {
         ct.modelo,
         ct.ano,
         ct.cor,
+        ct.km,
+        ct.preco_estimado,
         ct.vendedor,
         l.nome_do_lead,
         l.email_do_lead,
