@@ -10,6 +10,8 @@ import {
   Mail,
   Home,
   UserCheck,
+  Trash2,
+  Loader2,
 } from "lucide-react";
 import { Link } from "react-router-dom";
 import { useEffect, useState } from "react";
@@ -18,6 +20,7 @@ import { getApiUrl } from "@/config/api";
 
 const History = () => {
   const [matches, setMatches] = useState([]);
+  const [deletingId, setDeletingId] = useState<number | null>(null);
 
   useEffect(() => {
     const fetchMatches = async () => {
@@ -65,6 +68,25 @@ const History = () => {
       navigate("/login");
     }
   }, []);
+
+  const handleDelete = async (id: number) => {
+    const ok = window.confirm("Tem certeza que deseja deletar este registro?");
+    if (!ok) return;
+    try {
+      setDeletingId(id);
+      const resp = await fetch(getApiUrl(`/matches/${id}`), {
+        method: "DELETE",
+      });
+      if (!resp.ok && resp.status !== 204)
+        throw new Error(`HTTP ${resp.status}`);
+      setMatches((prev) => prev.filter((m) => m.id !== id));
+    } catch (err) {
+      console.error("Falha ao deletar match:", err);
+      alert("Não foi possível deletar. Tente novamente.");
+    } finally {
+      setDeletingId(null);
+    }
+  };
 
   // Função para formatar o nome do vendedor
   const formatVendedorName = (vendedor) => {
@@ -147,6 +169,19 @@ const History = () => {
                       <Calendar className="h-4 w-4" />
                       {new Date(match.matchDate).toLocaleDateString("pt-BR")}
                     </div>
+                    <button
+                      aria-label="Excluir match"
+                      className="inline-flex h-8 w-8 items-center justify-center rounded hover:bg-white/10 disabled:opacity-50"
+                      onClick={() => handleDelete(match.id)}
+                      disabled={deletingId === match.id}
+                      title="Excluir"
+                    >
+                      {deletingId === match.id ? (
+                        <Loader2 className="h-4 w-4 animate-spin text-white" />
+                      ) : (
+                        <Trash2 className="h-4 w-4 text-white" />
+                      )}
+                    </button>
                   </div>
                 </div>
               </CardHeader>

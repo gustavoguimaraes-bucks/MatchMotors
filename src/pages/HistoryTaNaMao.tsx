@@ -3,7 +3,15 @@ import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Home, Calendar, Car, User, ArrowLeft } from "lucide-react";
+import {
+  Home,
+  Calendar,
+  Car,
+  User,
+  ArrowLeft,
+  Trash2,
+  Loader2,
+} from "lucide-react";
 import { getApiUrl } from "@/config/api";
 
 type Item = {
@@ -35,6 +43,7 @@ const formatVendedorName = (vendedor?: string | null) => {
 const HistoryTaNaMao = () => {
   const [data, setData] = useState<Item[]>([]);
   const [loading, setLoading] = useState(true);
+  const [deletingId, setDeletingId] = useState<string | number | null>(null);
 
   useEffect(() => {
     const run = async () => {
@@ -50,6 +59,25 @@ const HistoryTaNaMao = () => {
     };
     run();
   }, []);
+
+  const handleDelete = async (id: string | number) => {
+    const ok = window.confirm("Tem certeza que deseja deletar este registro?");
+    if (!ok) return;
+    try {
+      setDeletingId(id);
+      const resp = await fetch(getApiUrl(`/history/ta-na-mao/${id}`), {
+        method: "DELETE",
+      });
+      if (!resp.ok && resp.status !== 204)
+        throw new Error(`HTTP ${resp.status}`);
+      setData((prev) => prev.filter((i) => i.id !== id));
+    } catch (err) {
+      console.error("Falha ao deletar registro (tá na mão):", err);
+      alert("Não foi possível deletar. Tente novamente.");
+    } finally {
+      setDeletingId(null);
+    }
+  };
 
   if (loading) {
     return (
@@ -108,6 +136,19 @@ const HistoryTaNaMao = () => {
                       <User className="h-4 w-4" />
                       Vendedor: {formatVendedorName(item.vendedor)}
                     </div>
+                    <button
+                      aria-label="Excluir registro"
+                      className="inline-flex h-8 w-8 items-center justify-center rounded hover:bg-muted disabled:opacity-50"
+                      onClick={() => handleDelete(item.id)}
+                      disabled={deletingId === item.id}
+                      title="Excluir"
+                    >
+                      {deletingId === item.id ? (
+                        <Loader2 className="h-4 w-4 animate-spin" />
+                      ) : (
+                        <Trash2 className="h-4 w-4" />
+                      )}
+                    </button>
                   </div>
                 </div>
               </CardHeader>
