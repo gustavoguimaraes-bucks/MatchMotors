@@ -38,9 +38,13 @@ type Item = {
     modelo?: string;
     anoInicio?: string;
     anoFim?: string;
+    anoLabel?: string;
     cor?: string;
     versao?: string;
     combustivel?: string;
+    km?: string;
+    precoMin?: string | number;
+    precoMax?: string | number;
   } | null;
   dataConsulta: string;
   status: string;
@@ -52,6 +56,58 @@ const formatVendedorName = (vendedor?: string | null) => {
     .split("-")
     .map((w) => w.charAt(0).toUpperCase() + w.slice(1))
     .join(" ");
+};
+
+const formatAnoDesejado = (
+  v?: { anoLabel?: string; anoInicio?: string; anoFim?: string } | null
+) => {
+  if (!v) return "-";
+  if (v.anoLabel) return v.anoLabel; // "2023 Gasolina"
+  const a = v.anoInicio ?? "";
+  const b = v.anoFim ?? "";
+  if (!a && !b) return "-";
+  if (!b || a === b) return a || b;
+  return `${a} - ${b}`;
+};
+
+// -------- Helpers de KM e Preço (toleram string/number ou ausência) --------
+const toNumber = (v: unknown) => {
+  if (typeof v === "number") return v;
+  const s = String(v ?? "")
+    .replace(/[^\d,.-]/g, "")
+    .replace(/\.(?=\d{3}(?:\D|$))/g, "")
+    .replace(",", ".");
+  const n = Number(s);
+  return Number.isFinite(n) ? n : NaN;
+};
+const brl = (n: number) =>
+  new Intl.NumberFormat("pt-BR", {
+    style: "currency",
+    currency: "BRL",
+    maximumFractionDigits: 0,
+  }).format(n);
+const formatPrecoDesejado = (v?: { precoMin?: any; precoMax?: any } | null) => {
+  if (!v) return "-";
+  const minRaw = (v as any).precoMin ?? (v as any).preco_minimo;
+  const maxRaw = (v as any).precoMax ?? (v as any).preco_maximo;
+  const min = toNumber(minRaw);
+  const max = toNumber(maxRaw);
+  const hasMin = Number.isFinite(min);
+  const hasMax = Number.isFinite(max);
+  if (!hasMin && !hasMax) return "-";
+  if (hasMin && hasMax) return `${brl(min)} - ${brl(max)}`;
+  return hasMin ? brl(min) : brl(max);
+};
+const formatKmDesejado = (
+  v?: { km?: string; kmMin?: any; kmMax?: any } | null
+) => {
+  if (!v) return "-";
+  const km = (v as any).km;
+  if (km) return km;
+  const a = (v as any).kmMin ?? (v as any).km_min;
+  const b = (v as any).kmMax ?? (v as any).km_max;
+  if (!a && !b) return "-";
+  return a && b ? `${a} - ${b}` : a || b;
 };
 
 const HistoryProcuraSe = () => {
@@ -196,24 +252,22 @@ const HistoryProcuraSe = () => {
                       <p>
                         <span className="font-medium">Modelo:</span>{" "}
                         {item.veiculoDesejado.modelo}
-                      </p>
+                      </p>{" "}
                       <p>
                         <span className="font-medium">Ano:</span>{" "}
-                        {formatAno(item.veiculoDesejado)}{" "}
+                        {formatAnoDesejado(item.veiculoDesejado)}{" "}
                       </p>
                       <p>
-                        <p>
-                          <span className="font-medium">Cor:</span>{" "}
-                          {capFirst(item.veiculoDesejado?.cor)}
-                        </p>
+                        <span className="font-medium">Cor:</span>{" "}
+                        {capFirst(item.veiculoDesejado?.cor)}
                       </p>
                       <p>
-                        <span className="font-medium">Versão:</span>{" "}
-                        {item.veiculoDesejado.versao}
+                        <span className="font-medium">KM desejada:</span>{" "}
+                        {formatKmDesejado(item.veiculoDesejado)}
                       </p>
                       <p>
-                        <span className="font-medium">Combustível:</span>{" "}
-                        {item.veiculoDesejado.combustivel}
+                        <span className="font-medium">Preço desejado:</span>{" "}
+                        {formatPrecoDesejado(item.veiculoDesejado)}
                       </p>
                     </div>
                   </div>

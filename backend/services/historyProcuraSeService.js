@@ -15,10 +15,11 @@ async function normalizeDesired(row) {
       modelo: row.modelo || "-",
       anoInicio: row.ano ? onlyYear(row.ano) : "-",
       anoFim: row.ano ? onlyYear(row.ano) : "-",
+      anoLabel: row.ano || "-",
       cor: row.cor || "-",
       km: row.km ?? "-",
-      precoMin: row.preco_min ?? "-",
-      precoMax: row.preco_max ?? "-",
+      precoMin: row.preco_min ?? row.preco_minimo ?? "-",
+      precoMax: row.preco_max ?? row.preco_maximo ?? "-",
       versao: row.versao || "-",
       combustivel: row.combustivel || "-",
     };
@@ -33,13 +34,19 @@ async function normalizeDesired(row) {
       ano: String(row.ano), // <— sem split!
     });
 
+    const anoLabel = normalized.ano_label || normalized.ano || row.ano;
+
     return {
       marca: normalized.marca || row.marca || "-",
       modelo: normalized.modelo || row.modelo || "-",
       // UI mostra faixa; como temos 1 ano, repetimos o ano numérico
       anoInicio: onlyYear(normalized.ano || row.ano),
       anoFim: onlyYear(normalized.ano || row.ano),
+      anoLabel, // <-- "2023 Gasolina"
       cor: row.cor || "-",
+      km: row.km ?? "-",
+      precoMin: row.preco_min ?? row.preco_minimo ?? "-",
+      precoMax: row.preco_max ?? row.preco_maximo ?? "-",
       versao: row.versao || "-",
       combustivel: row.combustivel || "-",
     };
@@ -50,6 +57,7 @@ async function normalizeDesired(row) {
       modelo: row.modelo || "-",
       anoInicio: row.ano ? onlyYear(row.ano) : "-",
       anoFim: row.ano ? onlyYear(row.ano) : "-",
+      anoLabel: row.ano || "-",
       cor: row.cor || "-",
       versao: row.versao || "-",
       combustivel: row.combustivel || "-",
@@ -98,8 +106,8 @@ exports.listar = async ({ limit = 50, offset = 0, q }) => {
         cd.ano,
         cd.cor,
         cd.km,
-        cd.preco_min,
-        cd.preco_max,
+        COALESCE(cd.preco_min, cd.preco_min) AS preco_min,
+        COALESCE(cd.preco_max, cd.preco_max) AS preco_max,
         cd.vendedor,
         l.nome_do_lead,
         l.email_do_lead,

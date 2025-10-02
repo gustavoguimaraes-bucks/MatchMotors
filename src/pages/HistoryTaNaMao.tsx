@@ -28,6 +28,7 @@ type Item = {
     marca?: string;
     modelo?: string;
     ano?: string;
+    anoLabel?: string;
     cor?: string;
     versao?: string;
     combustivel?: string;
@@ -191,15 +192,13 @@ const HistoryTaNaMao = () => {
                       </p>
                       <p>
                         <span className="font-medium">Ano:</span>{" "}
-                        {item.veiculoOfertado?.ano ?? "-"}
+                        {item.veiculoOfertado?.anoLabel ??
+                          item.veiculoOfertado?.ano ??
+                          "-"}
                       </p>
                       <p>
                         <span className="font-medium">Cor:</span>{" "}
                         {capFirst(item.veiculoOfertado?.cor)}
-                      </p>
-                      <p>
-                        <span className="font-medium">Combustível:</span>{" "}
-                        {item.veiculoOfertado?.combustivel ?? "-"}
                       </p>
                       <p>
                         <span className="font-medium">KM:</span>{" "}

@@ -13,6 +13,7 @@ async function normalizeCurrent(row) {
       marca: row.marca || "-",
       modelo: row.modelo || "-",
       ano: row.ano ? onlyYear(row.ano) : "-",
+      anoLabel: row.ano || "-",
       cor: row.cor || "-",
       versao: row.versao || "-",
       combustivel: row.combustivel || "-",
@@ -29,15 +30,18 @@ async function normalizeCurrent(row) {
       ano: String(row.ano), // usa o código completo "2012-1"
     });
 
+    const anoLabel = normalized.ano_label || normalized.ano || row.ano;
+
     return {
       marca: normalized.marca || row.marca || "-",
       modelo: normalized.modelo || row.modelo || "-",
-      ano: onlyYear(normalized.ano || row.ano),
+      ano: onlyYear(normalized.ano || row.ano), // mantém numérico para compat
+      anoLabel,
       cor: row.cor || "-",
       versao: row.versao || "-",
       combustivel: row.combustivel || "-",
       km: row.km || "-",
-      preco: row.preco || "-",
+      preco: row.preco_estimado ?? "-",
     };
   } catch (err) {
     console.error("Erro na normalização FIPE (tá-na-mão):", err);
@@ -45,11 +49,12 @@ async function normalizeCurrent(row) {
       marca: row.marca || "-",
       modelo: row.modelo || "-",
       ano: row.ano ? onlyYear(row.ano) : "-",
+      anoLabel: row.ano || "-",
       cor: row.cor || "-",
       versao: row.versao || "-",
       combustivel: row.combustivel || "-",
-      km: row.km || "-",
-      preco: row.preco || "-",
+      km: row.km ?? "-",
+      preco: row.preco_estimado ?? "-",
     };
   }
 }
