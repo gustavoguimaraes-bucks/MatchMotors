@@ -9,6 +9,7 @@ const matchHistoryRoutes = require("./routes/matchHistoryRoutes");
 const authRoutes = require("./routes/authRoutes");
 const procuraSeRoutes = require("./routes/historyProcuraSeRoutes");
 const taNaMaoRoutes = require("./routes/historyTaNaMaoRoutes");
+const estoqueRoutes = require("./routes/estoqueRoutes");
 
 const app = express();
 
@@ -35,6 +36,7 @@ app.use("/api/matches", matchHistoryRoutes);
 app.use("/api/auth", authRoutes);
 app.use("/api/history/procura-se", procuraSeRoutes);
 app.use("/api/history/ta-na-mao", taNaMaoRoutes);
+app.use("/estoque", estoqueRoutes);
 
 app.get("/test-db", async (req, res) => {
   try {

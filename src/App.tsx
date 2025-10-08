@@ -11,6 +11,7 @@ import Form from "./pages/Form";
 import History from "./pages/History";
 import HistoryProcuraSe from "./pages/HistoryProcuraSe";
 import HistoryTaNaMao from "./pages/HistoryTaNaMao";
+import Estoque from "./pages/Estoque";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -30,6 +31,7 @@ const App = () => (
           <Route path="/history" element={<History />} />
           <Route path="/history-procura-se" element={<HistoryProcuraSe />} />
           <Route path="/history-ta-na-mao" element={<HistoryTaNaMao />} />
+          <Route path="/estoque" element={<Estoque />} />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />
         </Routes>

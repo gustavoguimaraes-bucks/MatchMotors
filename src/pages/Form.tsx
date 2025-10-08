@@ -15,7 +15,7 @@ import logo from "@/assets/logo.png";
 import carBackground from "@/assets/car-bg.jpg";
 import { apiRequest, getApiUrl } from "@/config/api";
 import { Link } from "react-router-dom";
-import { Home } from "lucide-react";
+import { Home, Loader2 } from "lucide-react";
 
 const Form = () => {
   const [searchParams] = useSearchParams();
@@ -85,6 +85,7 @@ const Form = () => {
   const [currentKm, setCurrentKm] = useState("");
   const [currentPrice, setCurrentPrice] = useState("");
   const [currentObservations, setCurrentObservations] = useState("");
+  const [submitting, setSubmitting] = useState(false);
 
   const getNomeCompletoDoCarro = async (
     tipo: string,
@@ -135,6 +136,14 @@ const Form = () => {
       alert("Por favor, selecione um vendedor antes de continuar.");
       return;
     }
+
+    if (!vehicleType || !businessType) {
+      return;
+    }
+
+    // trava reentradas
+    if (submitting) return;
+    setSubmitting(true);
 
     // Pelo menos um contato do lead é obrigatório (email OU telefone)
     const emailOk = (leadEmail || "").trim().length > 0; // type=email já valida formato se preenchido
@@ -364,6 +373,8 @@ Fontes consultadas:
     } catch (error) {
       console.error("Erro ao enviar dados:", error);
       alert("Erro ao cadastrar lead. Verifique sua conexão e tente novamente.");
+    } finally {
+      setSubmitting(false);
     }
   };
 
@@ -977,8 +988,15 @@ Fontes consultadas:
           )}
 
           <div className="flex justify-center">
-            <Button onClick={handleSubmit} type="submit" className="px-12">
-              Match!
+            <Button type="submit" className="px-12" disabled={submitting}>
+              {submitting ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Processando...
+                </>
+              ) : (
+                "Match!"
+              )}
             </Button>
           </div>
         </form>

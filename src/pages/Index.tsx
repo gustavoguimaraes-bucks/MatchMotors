@@ -39,6 +39,11 @@ const Index = () => {
               Histórico
             </Button>
           </Link>
+          <Link to="/estoque">
+            <Button variant="elegant" size="lg" className="px-8">
+              Estoque
+            </Button>
+          </Link>
         </div>
       </div>
     </div>
